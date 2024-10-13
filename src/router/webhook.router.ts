@@ -1,9 +1,6 @@
 import { Response, Request, Router } from 'express';
 import { WebhookMessage } from '../model/webhook-model';
-import {
-  saveMessageInDB,
-  updateStatusMessage
-} from '../services/webhook-service';
+import { botInteraction } from '../services/bot-service';
 
 const routerWebhook = Router();
 
@@ -13,10 +10,10 @@ routerWebhook.post(
     try {
       const data: WebhookMessage = req.body;
       if (data.event === 'message.any') {
-        await saveMessageInDB(data);
-      } else if (data.event === 'message.ack') {
-        updateStatusMessage(data);
-      }
+        await botInteraction(data, 0);
+      } //else if (data.event === 'message.ack') {
+      //updateStatusMessage(data);
+      //}
 
       res
         .status(200)

@@ -48,7 +48,7 @@ function createToken(user: User) {
       {
         id: user.id,
         login: user.login,
-        roles: user.roles,
+        roles: user.role,
         company: user.company
       },
       SECRET_USER as string,

@@ -80,22 +80,16 @@ CREATE TABLE IF NOT EXISTS departaments (
     FOREIGN KEY (business_hours_id) REFERENCES business_hours(id)
 );
 
-CREATE TABLE IF NOT EXISTS channels_types (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
-)
-
 CREATE TABLE IF NOT EXISTS channels (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     connection VARCHAR(250) NOT NULL,
-    channel_type_id INTEGER NOT NULL,
+    channel_type VARCHAR(30) NOT NULL,
     company_id INTEGER NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (company_id) REFERENCES companies(id),
-    FOREIGN KEY (channel_type_id) REFERENCES channels_types(id)
+    FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -174,8 +168,18 @@ CREATE TABLE IF NOT EXISTS bots (
     id SERIAL PRIMARY KEY,
     type INTEGER NOT NULL,
     name VARCHAR(100) NOT NULL,
-    description VARCHAR(255),
-    control_potential INTEGER NOT NULL,
+    description VARCHAR,
+    greeting_message VARCHAR,
+    has_menu BOOLEAN DEFAULT FALSE,
+    has_segmentation BOOLEAN DEFAULT FALSE,
+    has_evaluation BOOLEAN DEFAULT FALSE,
+    option_message VARCHAR,
+    targeting_message VARCHAR,
+    absent_message VARCHAR,
+    message_evaluation VARCHAR,
+    evaluation_thanks_message VARCHAR,
+    error_evaluation_message VARCHAR,
+    final_greeting_message VARCHAR,
     time_limit_avaliation INTEGER NOT NULL,
     time_limit_notes INTEGER NOT NULL,
     time_limit_potential INTEGER NOT NULL,
@@ -191,9 +195,13 @@ CREATE TABLE IF NOT EXISTS bots (
 CREATE TABLE IF NOT EXISTS bot_questions (
     id SERIAL PRIMARY KEY,
     bot_id INTEGER NOT NULL,
-    question VARCHAR(255) NOT NULL,
-    type INTEGER NOT NULL,
-    options JSONB NOT NULL,
+    sequence_segmentation INTEGER,
+    options JSONB,
+    key_segmentation: VARCHAR(50),
+    type_response VARCHAR(50) NOT NULL,
+    type_question VARCHAR(50) NOT NULL,
+    url: VARCHAR,
+    text VARCHAR, 
     FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE
 );
 

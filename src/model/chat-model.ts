@@ -13,6 +13,46 @@ export interface ChatMessage {
   connectionType: string;
   lastMessage: number;
   messages: Message[];
+  inBot: boolean;
+  departamentId?: number;
+  userId?: number;
+  active: boolean;
+  dateCreateChat: number;
+  botState?: BotState;
+  segmentInfo?: any;
+}
+
+export interface BotState {
+  currentStage: string;
+  currentQuestionId: number;
+  currentSegmentationId: number;
+  startedAt: number;
+  lastInteraction: number;
+}
+
+export interface InsertChatMessage {
+  contactId: string;
+  photoURL?: string;
+  totalAttendances: number;
+  totalMessages: number;
+  phoneNumber: string;
+  contactName: string;
+  session: string;
+  connection: string;
+  connectionType: string;
+  lastMessage: number;
+  messages: Message[];
+  inBot: boolean;
+  departamentId?: number;
+  userId?: number;
+  active: boolean;
+  dateCreateChat: number;
+  botState?: BotState;
+  segmentInfo?: SegmentationInfo;
+}
+
+export interface SegmentationInfo {
+  [chave: string]: any;
 }
 
 export interface Message {
@@ -61,4 +101,6 @@ export interface CreateChat {
   connection: string;
   contactName: string;
   session: string;
+  userId: number;
+  departamentId: number;
 }

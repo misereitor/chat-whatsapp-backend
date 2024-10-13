@@ -1,8 +1,15 @@
 import { ObjectId } from 'mongodb';
 import { WebhookMessage } from '../model/webhook-model';
-import { ChatMessage, Media, Message, ReplyTo, S3 } from '../model/chat-model';
+import {
+  ChatMessage,
+  InsertChatMessage,
+  Media,
+  Message,
+  ReplyTo,
+  S3
+} from '../model/chat-model';
 
-export const replaceMessage = (message: WebhookMessage): ChatMessage => {
+export const replaceMessage = (message: WebhookMessage): InsertChatMessage => {
   let timestamp = 0;
   if (typeof message.payload.timestamp === 'number') {
     timestamp = message.payload.timestamp;
@@ -43,19 +50,21 @@ export const replaceMessage = (message: WebhookMessage): ChatMessage => {
     replyTo: message.payload.replyTo ? ReplyTo : null,
     vCard: message.payload.vCard ? message.payload.vCard : null
   };
-  const messageReplace: ChatMessage = {
-    _id: new ObjectId(),
+  const messageReplace: InsertChatMessage = {
     contactName: '',
     connection: message.me.id,
     session: message.session,
-    messages: [messages],
     phoneNumber: message.payload.from.split('@')[0],
     contactId: message.payload.from,
     totalAttendances: 1,
     totalMessages: 1,
     lastMessage: timestamp,
     photoURL: '',
-    connectionType: 'whatsapp'
+    connectionType: 'whatsapp',
+    inBot: true,
+    active: false,
+    dateCreateChat: new Date().getTime(),
+    messages: [messages]
   };
   return messageReplace;
 };

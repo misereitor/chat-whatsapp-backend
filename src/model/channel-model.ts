@@ -1,3 +1,5 @@
+import { Bot } from './bot-model';
+
 export interface Channel {
   id: number;
   name: string;
@@ -7,4 +9,5 @@ export interface Channel {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  bots: Bot[];
 }

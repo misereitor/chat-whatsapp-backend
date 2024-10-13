@@ -27,6 +27,22 @@ export async function createChannel(channel: Channel) {
   }
 }
 
+export async function getChannelByCompanyIdAndConnection(connection: string) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'SELECT * FROM channels WHERE connection = $1',
+      values: [connection]
+    };
+    const { rows } = await client.query(query);
+    return rows[0] as unknown as Channel;
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
 export async function updateChannel(channel: Channel) {
   const client = await pool.connect();
   try {

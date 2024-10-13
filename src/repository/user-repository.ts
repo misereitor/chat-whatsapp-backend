@@ -45,11 +45,14 @@ SELECT
     u.is_active,
     u.created_at,
     u.updated_at,
+    
+    -- Informações de Role
     jsonb_build_object(
-            'id', r.id,
-            'name', r.name
-        ) as roles,
-    -- Construção de um único objeto para a company, com os canais embutidos
+        'id', r.id,
+        'name', r.name
+    ) as role,
+    
+    -- Informações da Empresa e seus Canais
     jsonb_build_object(
         'id', c.id,
         'company_name', c.company_name,
@@ -70,7 +73,15 @@ SELECT
                 'updated_at', ch.updated_at
             )) FILTER (WHERE ch.id IS NOT NULL), '[]'::jsonb
         )
-    ) AS company
+    ) AS company,
+
+    -- Departamentos do Usuário
+    COALESCE(
+        jsonb_agg(DISTINCT jsonb_build_object(
+            'id', d.id,
+            'name', d.name
+        )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
+    ) AS departaments
 
 FROM 
     users u
@@ -82,10 +93,13 @@ LEFT JOIN roles r ON r.id = urc.role_id
 -- Relacionamento entre empresas e canais
 LEFT JOIN channels ch ON ch.company_id = c.id
 
+-- Relacionamento entre usuários e departamentos (adicionar a tabela correta aqui)
+LEFT JOIN departaments_users du ON du.user_id = u.id
+LEFT JOIN departaments d ON d.id = du.departament_id
+
 WHERE u.id = $1
 GROUP BY 
-    u.id, c.id, r.id;
-`,
+    u.id, c.id, r.id`,
       values: [id],
       rowMode: 'single'
     };
@@ -114,11 +128,14 @@ SELECT
     u.is_active,
     u.created_at,
     u.updated_at,
+    
+    -- Informações de Role
     jsonb_build_object(
-            'id', r.id,
-            'name', r.name
-        ) as roles,
-    -- Construção de um único objeto para a company, com os canais embutidos
+        'id', r.id,
+        'name', r.name
+    ) as role,
+    
+    -- Informações da Empresa e seus Canais
     jsonb_build_object(
         'id', c.id,
         'company_name', c.company_name,
@@ -139,7 +156,15 @@ SELECT
                 'updated_at', ch.updated_at
             )) FILTER (WHERE ch.id IS NOT NULL), '[]'::jsonb
         )
-    ) AS company
+    ) AS company,
+
+    -- Departamentos do Usuário
+    COALESCE(
+        jsonb_agg(DISTINCT jsonb_build_object(
+            'id', d.id,
+            'name', d.name
+        )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
+    ) AS departaments
 
 FROM 
     users u
@@ -151,11 +176,13 @@ LEFT JOIN roles r ON r.id = urc.role_id
 -- Relacionamento entre empresas e canais
 LEFT JOIN channels ch ON ch.company_id = c.id
 
+-- Relacionamento entre usuários e departamentos (adicionar a tabela correta aqui)
+LEFT JOIN departaments_users du ON du.user_id = u.id
+LEFT JOIN departaments d ON d.id = du.departament_id
+
 WHERE u.login like $1
 GROUP BY 
-    u.id, c.id, r.id;
-
-`,
+    u.id, c.id, r.id`,
       values: [login],
       rowMode: 'single'
     };

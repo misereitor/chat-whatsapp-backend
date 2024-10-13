@@ -7,6 +7,7 @@ import { routerChat } from './router/chat.router';
 import { routerUser } from './router/user.route';
 import { routerAuth } from './router/auth.route';
 import { routerContacts } from './router/contacts.router';
+import { routerDepartament } from './router/departament.router';
 
 const app: Application = express();
 
@@ -35,6 +36,7 @@ app.use('/api', routerChat);
 app.use('/api', routerUser);
 app.use('/api', routerAuth);
 app.use('/api', routerContacts);
+app.use('/api', routerDepartament);
 
 // Configuração do Socket.IO
 io.on('connection', (socket) => {

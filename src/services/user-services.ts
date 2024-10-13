@@ -26,7 +26,7 @@ export async function createUserServices(user: User) {
     await createAssociationRoleService(
       newUser.id,
       user.company.id,
-      user.roles.id
+      user.role.id
     );
     const userResponse = await getUserByLogin(user.login);
     return userResponse;
@@ -89,7 +89,7 @@ async function validateBeforeCreate(user: User) {
     const roleClient = ['admin', 'supervisor', 'atendente'];
     const userExist = await getUserByLogin(user.login);
     const company = await getCompanyById(user.company.id);
-    const roleUser = await gerRoleForId(user.roles.id);
+    const roleUser = await gerRoleForId(user.role.id);
     Promise.all([userExist, company, roleUser]);
 
     if (!roleUser) throw new Error('Cargo não encontrado');

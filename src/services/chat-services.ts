@@ -1,19 +1,33 @@
-import { ChatMessage, CreateChat, SendMessage } from '../model/chat-model';
+import {
+  BotState,
+  ChatMessage,
+  CreateChat,
+  SendMessage
+} from '../model/chat-model';
 import { getCompanyById } from '../repository/company-repository';
-import { Channel } from '../model/channel-model';
-import { findAllMessageByConnectionAndSession } from '../repository/chat-repository';
+import {
+  findAllMessage,
+  findAllMessageByUserAndDepartament
+} from '../repository/chat-repository';
 import { connectToMongo } from '../config/mongo_db.conf';
-import { getProfilePhoto, insertNewMenssage } from './webhook-service';
+import { getUserById } from '../repository/user-repository';
+import { Company } from '../model/company-model';
+import { User } from '../model/user-model';
 
 const { API_URL } = process.env;
 
-export async function findAllMessageInDB(company_id: number) {
+export async function findAllMessageInDB(company_id: number, user_id: any) {
   try {
-    const company = await getCompanyById(company_id);
-    const chats = await getAllMessagesByConnection(company.channels);
+    const companyAndUser = await checkPermissionUserChat(company_id, user_id);
+    if (!companyAndUser) throw new Error('Usuário não tem permissão');
+    const chats: ChatMessage[] = await getAllMessagesByConnection(
+      companyAndUser.company,
+      companyAndUser.user
+    );
+
     return chats;
   } catch (error: any) {
-    console.warn(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -29,7 +43,7 @@ export async function sendMessage(message: SendMessage) {
     });
     if (!response.ok) throw new Error('Erro ao enviar mensagem');
   } catch (error: any) {
-    console.warn(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -40,23 +54,37 @@ export async function createChatService(chat: CreateChat) {
     const newChat = await insertChat(chat);
     return newChat;
   } catch (error: any) {
-    console.warn(error.message);
+    throw new Error(error.message);
   }
 }
 
-async function getAllMessagesByConnection(connection: Channel[]) {
+async function getAllMessagesByConnection(company: Company, user: User) {
   const chats: ChatMessage[] = [];
   try {
-    for (const channel of connection) {
-      const chat = (await findAllMessageByConnectionAndSession(
-        channel.connection,
-        channel.name
-      )) as unknown as ChatMessage[];
-      chats.push(...chat);
+    if (user.role.id === 3 || user.role.id === 4) {
+      for (const channel of company.channels) {
+        const chat = (await findAllMessage(
+          channel.connection,
+          channel.name
+        )) as unknown as ChatMessage[];
+        chats.push(...chat);
+      }
+    } else if (user.role.id === 5) {
+      for (const channel of company.channels) {
+        for (const departament of user.departaments) {
+          const chat = (await findAllMessageByUserAndDepartament(
+            channel.connection,
+            channel.name,
+            user.id,
+            departament.id
+          )) as unknown as ChatMessage[];
+          chats.push(...chat);
+        }
+      }
     }
     return chats;
   } catch (error: any) {
-    console.warn(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -79,7 +107,7 @@ async function checkNumberExist(number: string, session: string) {
     }
     throw new Error('Número de telefone não disponível');
   } catch (error: any) {
-    console.warn(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -90,8 +118,16 @@ async function insertChat(chat: CreateChat) {
     chat.phoneNumber
   );
   if (chatExist) return chatExist;
-  const profilePhoto = await getProfilePhoto(chat.session, chat.phoneNumber);
-  const newChat = {
+  const botState: BotState = {
+    currentStage: '',
+    currentQuestionId: 0,
+    currentSegmentationId: 0,
+    startedAt: 0,
+    lastInteraction: 0
+  };
+  //const profilePhoto = await getProfilePhoto(chat.session, chat.phoneNumber);
+  const profilePhoto = { profilePictureURL: 'asdasd' };
+  const newChat: ChatMessage = {
     contactId: chat.phoneNumber,
     connection: chat.connection,
     session: chat.session,
@@ -103,9 +139,19 @@ async function insertChat(chat: CreateChat) {
     contactName: '',
     connectionType: '',
     lastMessage: new Date().getTime(),
-    photoURL: profilePhoto.profilePictureURL || ''
+    photoURL: profilePhoto.profilePictureURL || '',
+    inBot: false,
+    active: true,
+    dateCreateChat: new Date().getTime(),
+    departamentId: chat.departamentId,
+    userId: chat.userId,
+    botState
   };
-  await insertNewMenssage(newChat);
+  // const _id = await insertNewMenssage(newChat);
+  // if (!_id) {
+  //   throw new Error('Erro ao inserir mensagem');
+  // }
+  // newChat._id = _id;
   return newChat;
 }
 
@@ -125,6 +171,17 @@ export async function findChatInDBByConectionAndSession(
     });
     return message;
   } catch (error: any) {
-    console.warn(error.message);
+    throw new Error(error.message);
+  }
+}
+
+async function checkPermissionUserChat(company_id: number, user_id: number) {
+  try {
+    const user = await getUserById(user_id);
+    const company = await getCompanyById(company_id);
+    if (user.company.id !== company.id) throw new Error('Sem permissão');
+    return { user, company };
+  } catch (error: any) {
+    throw new Error(error.message);
   }
 }
