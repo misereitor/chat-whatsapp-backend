@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 
-export interface ChatMessage {
+export interface CustomersMessage {
   _id: ObjectId | string;
   contactId: string;
   photoURL?: string;
@@ -14,7 +14,28 @@ export interface ChatMessage {
   lastMessage: number;
   messages: Message[];
   inBot: boolean;
-  departamentId?: number;
+  departmentId?: number;
+  userId?: number;
+  active: boolean;
+  dateCreateChat: number;
+  botState?: BotState;
+  segmentInfo?: any;
+}
+
+export interface Customer {
+  _id: ObjectId | string;
+  contactId: string;
+  photoURL?: string;
+  totalAttendances: number;
+  totalMessages: number;
+  phoneNumber: string;
+  contactName: string;
+  session: string;
+  connection: string;
+  connectionType: string;
+  lastMessage: number;
+  inBot: boolean;
+  departmentId?: number;
   userId?: number;
   active: boolean;
   dateCreateChat: number;
@@ -30,7 +51,7 @@ export interface BotState {
   lastInteraction: number;
 }
 
-export interface InsertChatMessage {
+export interface InsertCustomer {
   contactId: string;
   photoURL?: string;
   totalAttendances: number;
@@ -41,14 +62,29 @@ export interface InsertChatMessage {
   connection: string;
   connectionType: string;
   lastMessage: number;
-  messages: Message[];
   inBot: boolean;
-  departamentId?: number;
+  departmentId?: number;
   userId?: number;
   active: boolean;
   dateCreateChat: number;
   botState?: BotState;
   segmentInfo?: SegmentationInfo;
+}
+
+export interface InsertMessage {
+  contactId: string;
+  session: string;
+  connection: string;
+  id: string;
+  timestamp: number;
+  fromMe: boolean;
+  participant: string | null;
+  body: string;
+  hasMedia: boolean;
+  media: Media | null;
+  status: number;
+  replyTo: ReplyTo | null;
+  vCard: string[] | null;
 }
 
 export interface SegmentationInfo {
@@ -69,14 +105,26 @@ export interface Message {
   vCard: string[] | null;
 }
 
+export interface Message {
+  _id: ObjectId | string;
+  id: string;
+  timestamp: number;
+  fromMe: boolean;
+  participant: string | null;
+  body: string;
+  hasMedia: boolean;
+  media: Media | null;
+  status: number;
+  replyTo: ReplyTo | null;
+  vCard: string[] | null;
+}
+
 export interface ReplyTo {
-  _id?: ObjectId | string;
   participant?: string;
   body?: string;
 }
 
 export interface Media {
-  _id?: ObjectId | string;
   url?: string;
   filename?: string;
   mimetype?: string;
@@ -85,7 +133,6 @@ export interface Media {
 }
 
 export interface S3 {
-  _id?: ObjectId | string;
   bucket?: string;
   key?: string;
 }
@@ -102,5 +149,5 @@ export interface CreateChat {
   contactName: string;
   session: string;
   userId: number;
-  departamentId: number;
+  departmentId: number;
 }

@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS business_hours (
     FOREIGN KEY (saturday_id) REFERENCES business_hours_days(id)
 );
 
-CREATE TABLE IF NOT EXISTS departaments (
+CREATE TABLE IF NOT EXISTS departments (
     id SERIAL PRIMARY KEY,
     company_id INTEGER NOT NULL,
     business_hours_id INTEGER,
@@ -131,13 +131,13 @@ CREATE TABLE IF NOT EXISTS tags (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS tags_departaments (
+CREATE TABLE IF NOT EXISTS tags_departments (
     id SERIAL PRIMARY KEY,
     tag_id INTEGER NOT NULL,
-    departament_id INTEGER NOT NULL,
+    department_id INTEGER NOT NULL,
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    FOREIGN KEY (departament_id) REFERENCES departaments(id) ON DELETE CASCADE,
-    UNIQUE (tag_id, departament_id)
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
+    UNIQUE (tag_id, department_id)
 );
 
 CREATE TABLE IF NOT EXISTS tags_user (
@@ -149,14 +149,14 @@ CREATE TABLE IF NOT EXISTS tags_user (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS user_departament (
+CREATE TABLE IF NOT EXISTS user_department (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    departament_id INTEGER NOT NULL,
+    department_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (user_id, departament_id),
+    UNIQUE (user_id, department_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (departament_id) REFERENCES departaments(id) ON DELETE CASCADE
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS notes (
@@ -200,8 +200,9 @@ CREATE TABLE IF NOT EXISTS bot_questions (
     key_segmentation: VARCHAR(50),
     type_response VARCHAR(50) NOT NULL,
     type_question VARCHAR(50) NOT NULL,
-    url: VARCHAR,
+    url VARCHAR,
     text VARCHAR, 
+    principal BOOLEAN,
     FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE
 );
 
@@ -223,12 +224,12 @@ CREATE TABLE IF NOT EXISTS fast_messages (
     FOREIGN KEY (user_create_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS departaments_fast_messages (
+CREATE TABLE IF NOT EXISTS departments_fast_messages (
     id SERIAL PRIMARY KEY,
-    departament_id INTEGER NOT NULL,
+    department_id INTEGER NOT NULL,
     fast_message_id INTEGER NOT NULL,
-    UNIQUE (departament_id, fast_message_id),
-    FOREIGN KEY (departament_id) REFERENCES departaments(id) ON DELETE CASCADE,
+    UNIQUE (department_id, fast_message_id),
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
     FOREIGN KEY (fast_message_id) REFERENCES fast_messages(id)
 );
 
@@ -241,12 +242,12 @@ CREATE TABLE IF NOT EXISTS user_fast_message (
     FOREIGN KEY (fast_message_id) REFERENCES fast_messages(id)
 );
 
-CREATE TABLE IF NOT EXISTS departaments_users (
+CREATE TABLE IF NOT EXISTS departments_users (
     id SERIAL PRIMARY KEY,
-    departament_id INTEGER NOT NULL,
+    department_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    UNIQUE (departament_id, user_id),
-    FOREIGN KEY (departament_id) REFERENCES departaments(id) ON DELETE CASCADE,
+    UNIQUE (department_id, user_id),
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

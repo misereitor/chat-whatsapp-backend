@@ -10,7 +10,7 @@ export interface ContactRequest {
   companyId: number;
   userId: number;
   bot: boolean;
-  departamentId: number[];
+  departmentId: number[];
 }
 
 export interface Contact {
@@ -24,7 +24,7 @@ export interface Contact {
   companyId: number;
   userId: number;
   bot: boolean;
-  departamentId: number[];
+  departmentId: number[];
 }
 
 export interface ContactResponse {
@@ -36,7 +36,7 @@ export interface ContactResponse {
 export interface ContactFilter {
   companyId: number;
   userId?: number;
-  departamentId?: number[];
+  departmentId?: number[];
   bot?: boolean;
   page: number;
   limit: number;

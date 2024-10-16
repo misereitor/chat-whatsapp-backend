@@ -39,7 +39,7 @@ export async function updateContact(contact: Contact) {
         { userId: contact.userId },
         { shared: true },
         { bot: true },
-        { departamentId: { $in: contact.departamentId } }
+        { departmentId: { $in: contact.departmentId } }
       ]
     };
     const result = await dbMongo.updateOne(query, { $set: { ...contact } });
@@ -82,8 +82,8 @@ export async function getAllContacts(filter: ContactFilter) {
       companyId: filter.companyId,
       $or: [{ bot: filter.bot }, { userId: filter.userId }]
     };
-    if (filter.departamentId) {
-      query.$or.push({ departamentId: { $in: filter.departamentId } });
+    if (filter.departmentId) {
+      query.$or.push({ departmentId: { $in: filter.departmentId } });
     }
 
     const contacts = await dbMongo
@@ -120,10 +120,10 @@ export async function getContactByFilter(filter: ContactFilter) {
       userId: filter.userId
     };
 
-    // 2. Busca de contatos compartilhados (departamento)
+    // 2. Busca de contatos compartilhados (departmento)
     const sharedContactsQuery: any = {
       ...baseQuery,
-      departamentId: { $in: filter.departamentId || [] }
+      departmentId: { $in: filter.departmentId || [] }
     };
 
     // 3. Busca de contatos do bot

@@ -1,15 +1,15 @@
 import { ObjectId } from 'mongodb';
 import { WebhookMessage } from '../model/webhook-model';
 import {
-  ChatMessage,
-  InsertChatMessage,
+  CustomersMessage,
+  InsertCustomer,
   Media,
-  Message,
+  InsertMessage,
   ReplyTo,
   S3
 } from '../model/chat-model';
 
-export const replaceMessage = (message: WebhookMessage): InsertChatMessage => {
+export const replaceMessage = (message: WebhookMessage) => {
   let timestamp = 0;
   if (typeof message.payload.timestamp === 'number') {
     timestamp = message.payload.timestamp;
@@ -18,25 +18,21 @@ export const replaceMessage = (message: WebhookMessage): InsertChatMessage => {
   }
 
   const ReplyTo: ReplyTo = {
-    _id: message.payload.id ? new ObjectId() : undefined,
     participant: message.payload.participant,
     body: message.payload.body
   };
   const s3: S3 = {
-    _id: message.payload.media?.s3?.key ? new ObjectId() : undefined,
     bucket: message.payload.media?.s3?.bucket,
     key: message.payload.media?.s3?.key
   };
   const media: Media = {
-    _id: message.payload.media?.url ? new ObjectId() : undefined,
     url: message.payload.media?.url,
     filename: message.payload.media?.filename,
     mimetype: message.payload.media?.mimetype,
     s3: message.payload.media?.s3 ? s3 : null,
     error: message.payload.media?.error
   };
-  const messages: Message = {
-    _id: new ObjectId(),
+  const messagem: InsertMessage = {
     id: message.payload.id,
     timestamp: timestamp,
     fromMe: message.payload.fromMe,
@@ -48,9 +44,12 @@ export const replaceMessage = (message: WebhookMessage): InsertChatMessage => {
     media: message.payload.media ? media : null,
     status: message.payload.ack,
     replyTo: message.payload.replyTo ? ReplyTo : null,
-    vCard: message.payload.vCard ? message.payload.vCard : null
+    vCard: message.payload.vCard ? message.payload.vCard : null,
+    contactId: message.payload.from,
+    session: message.session,
+    connection: message.me.id
   };
-  const messageReplace: InsertChatMessage = {
+  const contact: InsertCustomer = {
     contactName: '',
     connection: message.me.id,
     session: message.session,
@@ -63,10 +62,9 @@ export const replaceMessage = (message: WebhookMessage): InsertChatMessage => {
     connectionType: 'whatsapp',
     inBot: true,
     active: false,
-    dateCreateChat: new Date().getTime(),
-    messages: [messages]
+    dateCreateChat: new Date().getTime()
   };
-  return messageReplace;
+  return { contact, messagem };
 };
 
 export const replaceMessageUpdateStatus = (message: WebhookMessage) => {
@@ -81,5 +79,5 @@ export const replaceMessageUpdateStatus = (message: WebhookMessage) => {
     messages: [messages],
     contactId: message.payload.from
   };
-  return messageReplace as ChatMessage;
+  return messageReplace as CustomersMessage;
 };

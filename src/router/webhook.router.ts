@@ -9,6 +9,7 @@ routerWebhook.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const data: WebhookMessage = req.body;
+      console.log(data);
       if (data.event === 'message.any') {
         await botInteraction(data, 0);
       } //else if (data.event === 'message.ack') {

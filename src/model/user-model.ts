@@ -1,5 +1,5 @@
 import { Company } from './company-model';
-import { Departament } from './departament-model';
+import { department } from './department-model';
 
 export interface User {
   id: number;
@@ -14,7 +14,7 @@ export interface User {
   updatedAt: Date;
   role: Role;
   company: Company;
-  departaments: Departament[];
+  departments: department[];
 }
 
 export interface Role {

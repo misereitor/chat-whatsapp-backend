@@ -55,7 +55,7 @@ SELECT
         )) FILTER (WHERE ch.id IS NOT NULL), '[]'::jsonb
     ) AS channels,
 
-    -- Agregação dos departamentos
+    -- Agregação dos departmentos
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', d.id,
@@ -67,7 +67,7 @@ SELECT
         )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
     ) AS departments,
 
-    -- Agregação dos usuários com roles e departamentos
+    -- Agregação dos usuários com roles e departmentos
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', u.id,
@@ -83,15 +83,15 @@ SELECT
                 'id', r.id,
                 'name', r.name
             ),
-            'departaments', (SELECT 
+            'departments', (SELECT 
                 COALESCE(
                     jsonb_agg(DISTINCT jsonb_build_object(
                         'id', dp.id,
                         'name', dp.name
                     )) FILTER (WHERE dp.id IS NOT NULL), '[]'::jsonb
                 )
-            FROM departaments_users du
-            LEFT JOIN departaments dp ON dp.id = du.departament_id
+            FROM departments_users du
+            LEFT JOIN departments dp ON dp.id = du.department_id
             WHERE du.user_id = u.id)
         )) FILTER (WHERE u.id IS NOT NULL), '[]'::jsonb
     ) AS users,
@@ -123,8 +123,8 @@ FROM
     -- Relacionamento com os canais
     LEFT JOIN channels ch ON ch.company_id = c.id
 
-    -- Relacionamento com os departamentos da empresa
-    LEFT JOIN departaments d ON d.company_id = c.id
+    -- Relacionamento com os departmentos da empresa
+    LEFT JOIN departments d ON d.company_id = c.id
 
     -- Relacionamento entre usuários, empresas e roles
     LEFT JOIN users_roles_companies urc ON urc.company_id = c.id
@@ -185,7 +185,7 @@ SELECT
         )) FILTER (WHERE ch.id IS NOT NULL), '[]'::jsonb
     ) AS channels,
 
-    -- Agregação dos departamentos
+    -- Agregação dos departmentos
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', d.id,
@@ -197,7 +197,7 @@ SELECT
         )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
     ) AS departments,
 
-    -- Agregação dos usuários com roles e departamentos
+    -- Agregação dos usuários com roles e departmentos
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', u.id,
@@ -213,15 +213,15 @@ SELECT
                 'id', r.id,
                 'name', r.name
             ),
-            'departaments', (SELECT 
+            'departments', (SELECT 
                 COALESCE(
                     jsonb_agg(DISTINCT jsonb_build_object(
                         'id', dp.id,
                         'name', dp.name
                     )) FILTER (WHERE dp.id IS NOT NULL), '[]'::jsonb
                 )
-            FROM departaments_users du
-            LEFT JOIN departaments dp ON dp.id = du.departament_id
+            FROM departments_users du
+            LEFT JOIN departments dp ON dp.id = du.department_id
             WHERE du.user_id = u.id)
         )) FILTER (WHERE u.id IS NOT NULL), '[]'::jsonb
     ) AS users,
@@ -253,8 +253,8 @@ FROM
     -- Relacionamento com os canais
     LEFT JOIN channels ch ON ch.company_id = c.id
 
-    -- Relacionamento com os departamentos da empresa
-    LEFT JOIN departaments d ON d.company_id = c.id
+    -- Relacionamento com os departmentos da empresa
+    LEFT JOIN departments d ON d.company_id = c.id
 
     -- Relacionamento entre usuários, empresas e roles
     LEFT JOIN users_roles_companies urc ON urc.company_id = c.id
@@ -310,7 +310,7 @@ SELECT
         )) FILTER (WHERE ch.id IS NOT NULL), '[]'::jsonb
     ) AS channels,
 
-    -- Agregação dos departamentos
+    -- Agregação dos departmentos
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', d.id,
@@ -322,7 +322,7 @@ SELECT
         )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
     ) AS departments,
 
-    -- Agregação dos usuários com roles e departamentos
+    -- Agregação dos usuários com roles e departmentos
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', u.id,
@@ -338,15 +338,15 @@ SELECT
                 'id', r.id,
                 'name', r.name
             ),
-            'departaments', (SELECT 
+            'departments', (SELECT 
                 COALESCE(
                     jsonb_agg(DISTINCT jsonb_build_object(
                         'id', dp.id,
                         'name', dp.name
                     )) FILTER (WHERE dp.id IS NOT NULL), '[]'::jsonb
                 )
-            FROM departaments_users du
-            LEFT JOIN departaments dp ON dp.id = du.departament_id
+            FROM departments_users du
+            LEFT JOIN departments dp ON dp.id = du.department_id
             WHERE du.user_id = u.id)
         )) FILTER (WHERE u.id IS NOT NULL), '[]'::jsonb
     ) AS users,
@@ -378,8 +378,8 @@ FROM
     -- Relacionamento com os canais
     LEFT JOIN channels ch ON ch.company_id = c.id
 
-    -- Relacionamento com os departamentos da empresa
-    LEFT JOIN departaments d ON d.company_id = c.id
+    -- Relacionamento com os departmentos da empresa
+    LEFT JOIN departments d ON d.company_id = c.id
 
     -- Relacionamento entre usuários, empresas e roles
     LEFT JOIN users_roles_companies urc ON urc.company_id = c.id

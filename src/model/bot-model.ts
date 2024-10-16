@@ -36,25 +36,21 @@ export interface BotQuestions {
   text: string;
   key_segmentation: string;
   sequence_segmentation: number;
+  principal: boolean;
   options: BotOptions[];
 }
-
 export interface BotOptions {
   id: number;
   label: string;
-  option: BotOptions;
-}
-
-export interface BotOptions {
-  id: number;
   text: string;
   type: 'attendant' | 'department' | 'submenu' | 'text';
   action: BotAction;
+  options: BotOptions[];
 }
 
 export interface BotAction {
   option_id?: number;
-  departament_id?: number;
+  department_id?: number;
   attendant_id?: number;
   text?: string;
 }

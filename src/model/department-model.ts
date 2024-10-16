@@ -1,4 +1,4 @@
-export interface Departament {
+export interface department {
   id: number;
   name: string;
   company_id: number;
@@ -8,7 +8,7 @@ export interface Departament {
   updated_at: Date;
 }
 
-export interface CreateDepartament {
+export interface Createdepartment {
   company_id: number;
   business_hours_id?: number;
   name: string;
@@ -16,8 +16,8 @@ export interface CreateDepartament {
   user_id: number;
 }
 
-export interface UpdateDepartament {
-  departament_id: number;
+export interface Updatedepartment {
+  department_id: number;
   company_id: number;
   name: string;
   is_active: boolean;

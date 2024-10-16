@@ -1,47 +1,27 @@
-import {
-  BotState,
-  ChatMessage,
-  CreateChat,
-  SendMessage
-} from '../model/chat-model';
+import { BotState, CustomersMessage, CreateChat } from '../model/chat-model';
 import { getCompanyById } from '../repository/company-repository';
 import {
   findAllMessage,
-  findAllMessageByUserAndDepartament
+  findAllMessageByUserAnddepartment
 } from '../repository/chat-repository';
 import { connectToMongo } from '../config/mongo_db.conf';
 import { getUserById } from '../repository/user-repository';
 import { Company } from '../model/company-model';
 import { User } from '../model/user-model';
 
-const { API_URL } = process.env;
+const { API_URL_WHATSAPP_NO_OFFICIAL, SECRET_AIP_WHATSAPP_NO_OFFICIAL } =
+  process.env;
 
 export async function findAllMessageInDB(company_id: number, user_id: any) {
   try {
     const companyAndUser = await checkPermissionUserChat(company_id, user_id);
     if (!companyAndUser) throw new Error('Usuário não tem permissão');
-    const chats: ChatMessage[] = await getAllMessagesByConnection(
+    const chats: CustomersMessage[] = await getAllMessagesByConnection(
       companyAndUser.company,
       companyAndUser.user
     );
 
     return chats;
-  } catch (error: any) {
-    throw new Error(error.message);
-  }
-}
-
-export async function sendMessage(message: SendMessage) {
-  try {
-    const response = await fetch(`${API_URL}/api/sendText`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify(message)
-    });
-    if (!response.ok) throw new Error('Erro ao enviar mensagem');
   } catch (error: any) {
     throw new Error(error.message);
   }
@@ -59,25 +39,25 @@ export async function createChatService(chat: CreateChat) {
 }
 
 async function getAllMessagesByConnection(company: Company, user: User) {
-  const chats: ChatMessage[] = [];
+  const chats: CustomersMessage[] = [];
   try {
     if (user.role.id === 3 || user.role.id === 4) {
       for (const channel of company.channels) {
         const chat = (await findAllMessage(
           channel.connection,
           channel.name
-        )) as unknown as ChatMessage[];
+        )) as unknown as CustomersMessage[];
         chats.push(...chat);
       }
     } else if (user.role.id === 5) {
       for (const channel of company.channels) {
-        for (const departament of user.departaments) {
-          const chat = (await findAllMessageByUserAndDepartament(
+        for (const department of user.departments) {
+          const chat = (await findAllMessageByUserAnddepartment(
             channel.connection,
             channel.name,
             user.id,
-            departament.id
-          )) as unknown as ChatMessage[];
+            department.id
+          )) as unknown as CustomersMessage[];
           chats.push(...chat);
         }
       }
@@ -91,12 +71,13 @@ async function getAllMessagesByConnection(company: Company, user: User) {
 async function checkNumberExist(number: string, session: string) {
   try {
     const response = await fetch(
-      `${API_URL}/api/contacts/check-exists?phone=${number}&session=${session}`,
+      `${API_URL_WHATSAPP_NO_OFFICIAL}/api/contacts/check-exists?phone=${number}&session=${session}`,
       {
         method: 'get',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json'
+          Accept: 'application/json',
+          'X-Api-Key': String(SECRET_AIP_WHATSAPP_NO_OFFICIAL)
         }
       }
     );
@@ -127,7 +108,7 @@ async function insertChat(chat: CreateChat) {
   };
   //const profilePhoto = await getProfilePhoto(chat.session, chat.phoneNumber);
   const profilePhoto = { profilePictureURL: 'asdasd' };
-  const newChat: ChatMessage = {
+  const newChat: CustomersMessage = {
     contactId: chat.phoneNumber,
     connection: chat.connection,
     session: chat.session,
@@ -143,15 +124,10 @@ async function insertChat(chat: CreateChat) {
     inBot: false,
     active: true,
     dateCreateChat: new Date().getTime(),
-    departamentId: chat.departamentId,
+    departmentId: chat.departmentId,
     userId: chat.userId,
     botState
   };
-  // const _id = await insertNewMenssage(newChat);
-  // if (!_id) {
-  //   throw new Error('Erro ao inserir mensagem');
-  // }
-  // newChat._id = _id;
   return newChat;
 }
 

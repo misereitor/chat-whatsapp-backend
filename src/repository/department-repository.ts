@@ -1,30 +1,28 @@
 import pool from '../config/pg_db.conf';
 import {
-  CreateDepartament,
-  Departament,
-  UpdateDepartament
-} from '../model/departament-model';
+  Createdepartment,
+  department,
+  Updatedepartment
+} from '../model/department-model';
 
-export async function createDepartamentRepository(
-  departament: CreateDepartament
-) {
+export async function createdepartmentRepository(department: Createdepartment) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'INSERT INTO departaments (company_id, business_hours_id, name, is_active)' +
+        'INSERT INTO departments (company_id, business_hours_id, name, is_active)' +
         'VALUES' +
         '($1, $2, $3, $4) RETURNING *',
       values: [
-        departament.company_id,
-        departament.business_hours_id,
-        departament.name,
-        departament.is_active
+        department.company_id,
+        department.business_hours_id,
+        department.name,
+        department.is_active
       ],
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows as unknown as Departament;
+    return rows as unknown as department;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -32,18 +30,18 @@ export async function createDepartamentRepository(
   }
 }
 
-export async function associateDepartamentForUserRepository(
+export async function associatedepartmentForUserRepository(
   user_id: number,
-  departament_id: number
+  department_id: number
 ) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'INSERT INTO departaments_users (user_id, departament_id)' +
+        'INSERT INTO departments_users (user_id, department_id)' +
         'VALUES' +
         '($1, $2)',
-      values: [user_id, departament_id]
+      values: [user_id, department_id]
     };
     await client.query(query);
   } catch (error: any) {
@@ -53,15 +51,15 @@ export async function associateDepartamentForUserRepository(
   }
 }
 
-export async function disassociateDepartamentForUserRepository(
+export async function disassociatedepartmentForUserRepository(
   user_id: number,
-  departament_id: number
+  department_id: number
 ) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'DELETE FROM departaments_users WHERE user_id = $1 AND departament_id = $2',
-      values: [user_id, departament_id]
+      text: 'DELETE FROM departments_users WHERE user_id = $1 AND department_id = $2',
+      values: [user_id, department_id]
     };
     await client.query(query);
   } catch (error: any) {
@@ -71,16 +69,14 @@ export async function disassociateDepartamentForUserRepository(
   }
 }
 
-export async function updateDepartamentRepository(
-  departament: UpdateDepartament
-) {
+export async function updatedepartmentRepository(department: Updatedepartment) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'UPDATE departaments SET' +
+        'UPDATE departments SET' +
         'name = $1, update_at = CURRENT_TIMESTAMP WHERE id = $5',
-      values: [departament.name, departament.departament_id]
+      values: [department.name, department.department_id]
     };
     await client.query(query);
   } catch (error: any) {
@@ -90,11 +86,11 @@ export async function updateDepartamentRepository(
   }
 }
 
-export async function desactiveDepartamentRepository(id: number) {
+export async function desactivedepartmentRepository(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'UPDATE departaments SET is_active = false, update_at = CURRENT_TIMESTAMP WHERE id = $1',
+      text: 'UPDATE departments SET is_active = false, update_at = CURRENT_TIMESTAMP WHERE id = $1',
       values: [id]
     };
     await client.query(query);
@@ -105,11 +101,11 @@ export async function desactiveDepartamentRepository(id: number) {
   }
 }
 
-export async function activeDepartamentRepository(id: number) {
+export async function activedepartmentRepository(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'UPDATE departaments SET is_active = true, update_at = CURRENT_TIMESTAMP WHERE id = $1',
+      text: 'UPDATE departments SET is_active = true, update_at = CURRENT_TIMESTAMP WHERE id = $1',
       values: [id]
     };
     await client.query(query);
@@ -120,11 +116,11 @@ export async function activeDepartamentRepository(id: number) {
   }
 }
 
-export async function deleteDepartamentRepository(id: number) {
+export async function deletedepartmentRepository(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'DELETE FROM departaments WHERE id = $1',
+      text: 'DELETE FROM departments WHERE id = $1',
       values: [id]
     };
     await client.query(query);

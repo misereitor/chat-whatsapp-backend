@@ -75,13 +75,13 @@ SELECT
         )
     ) AS company,
 
-    -- Departamentos do Usuário
+    -- departmentos do Usuário
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', d.id,
             'name', d.name
         )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
-    ) AS departaments
+    ) AS departments
 
 FROM 
     users u
@@ -93,9 +93,9 @@ LEFT JOIN roles r ON r.id = urc.role_id
 -- Relacionamento entre empresas e canais
 LEFT JOIN channels ch ON ch.company_id = c.id
 
--- Relacionamento entre usuários e departamentos (adicionar a tabela correta aqui)
-LEFT JOIN departaments_users du ON du.user_id = u.id
-LEFT JOIN departaments d ON d.id = du.departament_id
+-- Relacionamento entre usuários e departmentos (adicionar a tabela correta aqui)
+LEFT JOIN departments_users du ON du.user_id = u.id
+LEFT JOIN departments d ON d.id = du.department_id
 
 WHERE u.id = $1
 GROUP BY 
@@ -158,13 +158,13 @@ SELECT
         )
     ) AS company,
 
-    -- Departamentos do Usuário
+    -- departmentos do Usuário
     COALESCE(
         jsonb_agg(DISTINCT jsonb_build_object(
             'id', d.id,
             'name', d.name
         )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
-    ) AS departaments
+    ) AS departments
 
 FROM 
     users u
@@ -176,9 +176,9 @@ LEFT JOIN roles r ON r.id = urc.role_id
 -- Relacionamento entre empresas e canais
 LEFT JOIN channels ch ON ch.company_id = c.id
 
--- Relacionamento entre usuários e departamentos (adicionar a tabela correta aqui)
-LEFT JOIN departaments_users du ON du.user_id = u.id
-LEFT JOIN departaments d ON d.id = du.departament_id
+-- Relacionamento entre usuários e departmentos (adicionar a tabela correta aqui)
+LEFT JOIN departments_users du ON du.user_id = u.id
+LEFT JOIN departments d ON d.id = du.department_id
 
 WHERE u.login like $1
 GROUP BY 

@@ -1,11 +1,11 @@
 import { Response, Request, Router } from 'express';
 import {
   createChatService,
-  findAllMessageInDB,
-  sendMessage
+  findAllMessageInDB
 } from '../services/chat-services';
 import { clientChatMiddleware } from '../middleware';
 import { valideTokenUserAdminService } from '../services/auth-service';
+import { sendMessage } from '../services/message-service';
 
 const routerChat = Router();
 
