@@ -1,15 +1,14 @@
-import { ObjectId } from 'mongodb';
 import { WebhookMessage } from '../model/webhook-model';
 import {
-  CustomersMessage,
   InsertCustomer,
   Media,
   InsertMessage,
   ReplyTo,
-  S3
+  S3,
+  Message
 } from '../model/chat-model';
 
-export const replaceMessage = (message: WebhookMessage) => {
+export const replaceMessage = (message: WebhookMessage, channel_id: number) => {
   let timestamp = 0;
   if (typeof message.payload.timestamp === 'number') {
     timestamp = message.payload.timestamp;
@@ -45,39 +44,47 @@ export const replaceMessage = (message: WebhookMessage) => {
     status: message.payload.ack,
     replyTo: message.payload.replyTo ? ReplyTo : null,
     vCard: message.payload.vCard ? message.payload.vCard : null,
-    contactId: message.payload.from,
+    chatId: message.payload.from,
     session: message.session,
     connection: message.me.id
   };
   const contact: InsertCustomer = {
     contactName: '',
-    connection: message.me.id,
-    session: message.session,
+    channel_id: channel_id,
     phoneNumber: message.payload.from.split('@')[0],
-    contactId: message.payload.from,
+    chatId: message.payload.from,
     totalAttendances: 1,
     totalMessages: 1,
     lastMessage: timestamp,
     photoURL: '',
-    connectionType: 'whatsapp',
     inBot: true,
     active: false,
-    dateCreateChat: new Date().getTime()
+    dateCreateChat: new Date().getTime(),
+    currentStage: 'segmentation',
+    currentQuestionId: 0,
+    currentSegmentationId: 0,
+    startedAt: 0,
+    id: 0
   };
   return { contact, messagem };
 };
 
 export const replaceMessageUpdateStatus = (message: WebhookMessage) => {
-  const messages = {
+  const messageReplace: Message = {
+    _id: '',
     id: message.payload.id,
-    status: message.payload.ack
-  };
-  const messageReplace = {
-    _id: new ObjectId(),
-    connection: message.me.id,
+    timestamp: 0,
+    fromMe: false,
+    participant: null,
+    body: '',
+    hasMedia: false,
+    media: null,
+    status: message.payload.ack,
+    replyTo: null,
+    vCard: null,
+    chatId: message.payload.from,
     session: message.session,
-    messages: [messages],
-    contactId: message.payload.from
+    connection: message.me.id
   };
-  return messageReplace as CustomersMessage;
+  return messageReplace as Message;
 };

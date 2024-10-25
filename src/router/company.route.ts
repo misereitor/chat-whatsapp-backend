@@ -1,22 +1,23 @@
 import { Response, Request, Router } from 'express';
-import {
-  createUserServices,
-  getAllUserByCompanyIdService,
-  getUserByIdService,
-  updateUserService
-} from '../services/user-services';
-import { InsertUser } from '../model/user-model';
 import { clientSupervisorMiddleware } from '../middleware';
+import {
+  createCompanyServices,
+  getAllCompanyServices,
+  getCompanyByCPNJServices,
+  getCompanyByIdServices
+} from '../services/company-service';
+import { Company } from '../model/company-model';
+import { valideTokenUserAdminService } from '../services/auth-service';
 
-const routerUser = Router();
+const routerCompany = Router();
 
-routerUser.post(
-  '/user/create-user',
+routerCompany.post(
+  '/company/create-company',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const user: InsertUser = req.body;
-      const response = await createUserServices(user);
+      const company: Company = req.body;
+      const response = await createCompanyServices(company);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -24,13 +25,14 @@ routerUser.post(
   }
 );
 
-routerUser.put(
-  '/user/update-user',
+routerCompany.post(
+  '/company/get-all-company',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const user = req.body;
-      const response = await updateUserService(user.user);
+      const token: string | undefined = req.headers.authorization;
+      const responseToken: any = await valideTokenUserAdminService(token);
+      const response = await getAllCompanyServices(responseToken);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -38,27 +40,13 @@ routerUser.put(
   }
 );
 
-routerUser.post(
-  '/user/get-all-users',
-  clientSupervisorMiddleware,
-  async (req: Request, res: Response) => {
-    try {
-      const { company_id } = req.body;
-      const response = await getAllUserByCompanyIdService(Number(company_id));
-      res.status(200).json({ success: true, data: response });
-    } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-);
-
-routerUser.post(
-  '/user/get-user/:id',
+routerCompany.post(
+  '/company/get-company-by-id/:id',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const response = await getUserByIdService(Number(id));
+      const response = await getCompanyByIdServices(Number(id));
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -66,4 +54,18 @@ routerUser.post(
   }
 );
 
-export { routerUser };
+routerCompany.post(
+  '/company/get-company-by-cnpj/:cnpj',
+  clientSupervisorMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const { cnpj } = req.params;
+      const response = await getCompanyByCPNJServices(cnpj);
+      res.status(200).json({ success: true, data: response });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+export { routerCompany };

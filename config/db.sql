@@ -4,9 +4,11 @@ CREATE TABLE IF NOT EXISTS companies (
     trade_name VARCHAR(100),
     cnpj VARCHAR(14) NOT NULL UNIQUE,
     type VARCHAR(50),
+    dealer_id INTEGER,
     is_active BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (dealer_id) REFERENCES companies(id)
 );
 
 CREATE TABLE IF NOT EXISTS plans (
@@ -84,6 +86,7 @@ CREATE TABLE IF NOT EXISTS channels (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     connection VARCHAR(250) NOT NULL,
+    session VARCHAR (100) NOT NULL,
     channel_type VARCHAR(30) NOT NULL,
     company_id INTEGER NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -98,6 +101,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100),
     phone_number VARCHAR(14),
     photo_url VARCHAR(255),
+    grade INTEGER[],
     login VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -251,6 +255,31 @@ CREATE TABLE IF NOT EXISTS departments_users (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS customers (
+    id SERIAL PRIMARY KEY,
+    chat_id VARCHAR(50) NOT NULL,
+    photo_url VARCHAR,
+    total_attendances INTEGER,
+    total_messages INTEGER,
+    phone_number VARCHAR(20) NOT NULL,
+    contact_name VARCHAR(50),
+    channel_id INTEGER NOT NULL,
+    last_message BIGINT,
+    in_bot BOOLEAN,
+    active BOOLEAN,
+    department_id INTEGER,
+    user_id INTEGER,
+    date_create_chat BIGINT,
+    segment_info JSONB,
+    current_stage VARCHAR(20) NOT NULL,
+    current_question_id INTEGER,
+    current_segmentation_id INTEGER,
+    started_at BIGINT NOT NULL,
+    UNIQUE (phone_number, channel_id),
+    FOREIGN KEY (department_id) REFERENCES departments(id),
+    FOREIGN KEY (channel_id) REFERENCES channels(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 
 INSERT INTO companies
 	(company_name, trade_name, type, cnpj, is_active)

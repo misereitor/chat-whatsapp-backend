@@ -1,13 +1,20 @@
-import { BotState, CustomersMessage, CreateChat } from '../model/chat-model';
-import { getCompanyById } from '../repository/company-repository';
 import {
-  findAllMessage,
-  findAllMessageByUserAnddepartment
-} from '../repository/chat-repository';
-import { connectToMongo } from '../config/mongo_db.conf';
-import { getUserById } from '../repository/user-repository';
-import { Company } from '../model/company-model';
+  CustomersMessage,
+  CreateChat,
+  InsertCustomer,
+  Customer,
+  Message
+} from '../model/chat-model';
 import { User } from '../model/user-model';
+import { getChannelByConnectionAndSession } from '../repository/channel-repository';
+import {
+  createCustomer,
+  getAllCustommerByUserAndDepartment,
+  getCustomerByChannelAndChatId
+} from '../repository/chat-repository';
+import { getCompanyById } from '../repository/company-repository';
+import { getUserById } from '../repository/user-repository';
+import { getMessageByCustomer } from './message-service';
 
 const { API_URL_WHATSAPP_NO_OFFICIAL, SECRET_AIP_WHATSAPP_NO_OFFICIAL } =
   process.env;
@@ -16,11 +23,8 @@ export async function findAllMessageInDB(company_id: number, user_id: any) {
   try {
     const companyAndUser = await checkPermissionUserChat(company_id, user_id);
     if (!companyAndUser) throw new Error('Usuário não tem permissão');
-    const chats: CustomersMessage[] = await getAllMessagesByConnection(
-      companyAndUser.company,
-      companyAndUser.user
-    );
-
+    const chats: CustomersMessage[] | undefined =
+      await getAllChatsByCompanyForUser(companyAndUser.user);
     return chats;
   } catch (error: any) {
     throw new Error(error.message);
@@ -29,39 +33,113 @@ export async function findAllMessageInDB(company_id: number, user_id: any) {
 
 export async function createChatService(chat: CreateChat) {
   try {
-    const number = await checkNumberExist(chat.phoneNumber, chat.session);
-    chat.phoneNumber = number.chatId;
-    const newChat = await insertChat(chat);
+    const channel = await getChannelByConnectionAndSession(
+      chat.connection,
+      chat.session
+    );
+    const numberExists = await checkNumberExist(chat.phoneNumber, chat.session);
+    const chatExist = await getCustomerByChannelAndChatId(
+      channel,
+      numberExists.chatId
+    );
+
+    if (!channel) throw new Error('Canal não encontrado');
+    if (!numberExists.numberExists)
+      throw new Error('Número não está cadastrado no whatsapp');
+    const profilePhoto = await getProfilePhoto(
+      chat.session,
+      numberExists.chatId
+    );
+    if (chatExist) throw new Error('Chat já existe'); //todo para verificar em quem o chat tá preso
+    const newChat: InsertCustomer = {
+      id: 0,
+      chatId: numberExists.chatId,
+      phoneNumber: chat.phoneNumber,
+      totalAttendances: 0,
+      totalMessages: 0,
+      contactName: '',
+      lastMessage: new Date().getTime(),
+      photoURL: profilePhoto.profilePictureURL || '',
+      inBot: false,
+      active: true,
+      dateCreateChat: new Date().getTime(),
+      department_id: chat.departmentId,
+      user_id: chat.attendantId,
+      channel_id: channel.id,
+      currentStage: 'service',
+      currentQuestionId: 0,
+      currentSegmentationId: 0,
+      startedAt: 0
+    };
+    await createCustomer(newChat);
     return newChat;
+  } catch (error: any) {
+    console.warn(error.message);
+    throw new Error(error.message);
+  }
+}
+
+async function getAllChatsByCompanyForUser(user: User) {
+  try {
+    switch (user.role.id) {
+      case 3:
+        return await getAllChatsByUserAdmin(user);
+      case 4:
+        return await getAllChatsByUserSupervisor(user);
+      case 5:
+        return await getAllChatsByAttendantAndUser(user);
+      default:
+        throw new Error('Usuário não tem permissão');
+    }
   } catch (error: any) {
     throw new Error(error.message);
   }
 }
 
-async function getAllMessagesByConnection(company: Company, user: User) {
-  const chats: CustomersMessage[] = [];
+async function getAllChatsByAttendantAndUser(user: User) {
   try {
-    if (user.role.id === 3 || user.role.id === 4) {
-      for (const channel of company.channels) {
-        const chat = (await findAllMessage(
-          channel.connection,
-          channel.name
-        )) as unknown as CustomersMessage[];
-        chats.push(...chat);
-      }
-    } else if (user.role.id === 5) {
-      for (const channel of company.channels) {
-        for (const department of user.departments) {
-          const chat = (await findAllMessageByUserAnddepartment(
-            channel.connection,
-            channel.name,
-            user.id,
-            department.id
-          )) as unknown as CustomersMessage[];
-          chats.push(...chat);
-        }
+    const chats: CustomersMessage[] | undefined = [];
+    const customers: Customer[] | undefined = [];
+    for (const channel of user.company.channels) {
+      for (const department of user.departments) {
+        const customer = await getAllCustommerByUserAndDepartment(
+          channel,
+          user.id,
+          department.id
+        );
+        customers.push(...customer);
       }
     }
+    for (const customer of customers) {
+      const messages: Message[] = [];
+      const message = await getMessageByCustomer(customer);
+      if (!message) continue;
+      messages.push(...message);
+      chats.push({
+        ...customer,
+        messages: messages
+      });
+    }
+    return chats;
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+async function getAllChatsByUserSupervisor(user: User) {
+  try {
+    console.log(user);
+    const chats: CustomersMessage[] | undefined = undefined;
+    return chats;
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+async function getAllChatsByUserAdmin(user: User) {
+  try {
+    console.log(user);
+    const chats: CustomersMessage[] | undefined = undefined;
     return chats;
   } catch (error: any) {
     throw new Error(error.message);
@@ -92,65 +170,6 @@ async function checkNumberExist(number: string, session: string) {
   }
 }
 
-async function insertChat(chat: CreateChat) {
-  const chatExist = await findChatInDBByConectionAndSession(
-    chat.connection,
-    chat.session,
-    chat.phoneNumber
-  );
-  if (chatExist) return chatExist;
-  const botState: BotState = {
-    currentStage: '',
-    currentQuestionId: 0,
-    currentSegmentationId: 0,
-    startedAt: 0,
-    lastInteraction: 0
-  };
-  //const profilePhoto = await getProfilePhoto(chat.session, chat.phoneNumber);
-  const profilePhoto = { profilePictureURL: 'asdasd' };
-  const newChat: CustomersMessage = {
-    contactId: chat.phoneNumber,
-    connection: chat.connection,
-    session: chat.session,
-    phoneNumber: chat.phoneNumber,
-    messages: [],
-    _id: '',
-    totalAttendances: 0,
-    totalMessages: 0,
-    contactName: '',
-    connectionType: '',
-    lastMessage: new Date().getTime(),
-    photoURL: profilePhoto.profilePictureURL || '',
-    inBot: false,
-    active: true,
-    dateCreateChat: new Date().getTime(),
-    departmentId: chat.departmentId,
-    userId: chat.userId,
-    botState
-  };
-  return newChat;
-}
-
-export async function findChatInDBByConectionAndSession(
-  connection: string,
-  session: string,
-  contactId: string
-) {
-  try {
-    const mongoClient = await connectToMongo();
-    const dbMongo = mongoClient.db('chatbot').collection('chat');
-
-    const message = await dbMongo.findOne({
-      connection,
-      session,
-      contactId
-    });
-    return message;
-  } catch (error: any) {
-    throw new Error(error.message);
-  }
-}
-
 async function checkPermissionUserChat(company_id: number, user_id: number) {
   try {
     const user = await getUserById(user_id);
@@ -159,5 +178,27 @@ async function checkPermissionUserChat(company_id: number, user_id: number) {
     return { user, company };
   } catch (error: any) {
     throw new Error(error.message);
+  }
+}
+
+export async function getProfilePhoto(session: string, contactid: string) {
+  try {
+    const response = await fetch(
+      `${API_URL_WHATSAPP_NO_OFFICIAL}/api/contacts/profile-picture?contactId=${contactid}&session=${session}`,
+      {
+        method: 'get',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Api-Key': String(SECRET_AIP_WHATSAPP_NO_OFFICIAL)
+        }
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
+  } catch (error: any) {
+    console.warn(error.message);
   }
 }

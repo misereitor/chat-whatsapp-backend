@@ -13,8 +13,27 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   role: Role;
+  grade: number[];
   company: Company;
   departments: department[];
+}
+
+export interface InsertUser {
+  id: number;
+  name: string;
+  email: string;
+  phone_number: string;
+  photo?: string;
+  photoBlob?: Blob;
+  photo_url?: string;
+  login: string;
+  password: string;
+  is_active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  role: Role;
+  company_id: number;
+  departments?: department[];
 }
 
 export interface Role {

@@ -1,7 +1,7 @@
 import pool from '../config/pg_db.conf';
-import { User } from '../model/user-model';
+import { InsertUser, User } from '../model/user-model';
 
-export async function createUser(user: User) {
+export async function createUser(user: InsertUser) {
   const client = await pool.connect();
   try {
     const query = {
@@ -40,8 +40,9 @@ SELECT
     u.email,
     u.phone_number,
     u.photo_url,
+        (SELECT AVG(grade::NUMERIC)
+     FROM unnest(u.grade) AS grade) AS grade,
     u.login,
-    u.password,
     u.is_active,
     u.created_at,
     u.updated_at,
@@ -67,7 +68,8 @@ SELECT
                 'id', ch.id,
                 'name', ch.name,
                 'connection', ch.connection,
-                'channel_type_id', ch.channel_type_id,
+                'session', ch.session,
+                'channel_type', ch.channel_type,
                 'is_active', ch.is_active,
                 'created_at', ch.created_at,
                 'updated_at', ch.updated_at
@@ -123,6 +125,8 @@ SELECT
     u.email,
     u.phone_number,
     u.photo_url,
+    (SELECT AVG(grade::NUMERIC)
+     FROM unnest(u.grade) AS grade) AS grade,
     u.login,
     u.password,
     u.is_active,
@@ -150,7 +154,8 @@ SELECT
                 'id', ch.id,
                 'name', ch.name,
                 'connection', ch.connection,
-                'channel_type_id', ch.channel_type_id,
+                'session', ch.session,
+                'channel_type', ch.channel_type,
                 'is_active', ch.is_active,
                 'created_at', ch.created_at,
                 'updated_at', ch.updated_at
@@ -180,7 +185,7 @@ LEFT JOIN channels ch ON ch.company_id = c.id
 LEFT JOIN departments_users du ON du.user_id = u.id
 LEFT JOIN departments d ON d.id = du.department_id
 
-WHERE u.login like $1
+WHERE u.login like ($1)
 GROUP BY 
     u.id, c.id, r.id`,
       values: [login],
@@ -195,13 +200,98 @@ GROUP BY
   }
 }
 
-export async function updateUser(user: User) {
+export async function getAllUserByCompanyId(id: number) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: `
+SELECT 
+    u.id AS id,
+    u.name,
+    u.email,
+    u.phone_number,
+    u.photo_url,
+    (SELECT AVG(grade::NUMERIC)
+     FROM unnest(u.grade) AS grade) AS grade,
+    u.login,
+    u.is_active,
+    u.created_at,
+    u.updated_at,
+    
+    -- Informações de Role
+    jsonb_build_object(
+        'id', r.id,
+        'name', r.name
+    ) as role,
+    
+    -- Informações da Empresa e seus Canais
+    jsonb_build_object(
+        'id', c.id,
+        'company_name', c.company_name,
+        'trade_name', c.trade_name,
+        'type', c.type,
+        'cnpj', c.cnpj,
+        'is_active', c.is_active,
+        'created_at', c.created_at,
+        'updated_at', c.updated_at,
+        'channels', COALESCE(
+            jsonb_agg(DISTINCT jsonb_build_object(
+                'id', ch.id,
+                'name', ch.name,
+                'connection', ch.connection,
+                'session', ch.session,
+                'channel_type', ch.channel_type,
+                'is_active', ch.is_active,
+                'created_at', ch.created_at,
+                'updated_at', ch.updated_at
+            )) FILTER (WHERE ch.id IS NOT NULL), '[]'::jsonb
+        )
+    ) AS company,
+
+    -- departmentos do Usuário
+    COALESCE(
+        jsonb_agg(DISTINCT jsonb_build_object(
+            'id', d.id,
+            'name', d.name
+        )) FILTER (WHERE d.id IS NOT NULL), '[]'::jsonb
+    ) AS departments
+
+FROM 
+    users u
+-- Relacionamento entre usuários, empresas e roles
+LEFT JOIN users_roles_companies urc ON urc.user_id = u.id
+LEFT JOIN companies c ON c.id = urc.company_id
+LEFT JOIN roles r ON r.id = urc.role_id
+
+-- Relacionamento entre empresas e canais
+LEFT JOIN channels ch ON ch.company_id = c.id
+
+-- Relacionamento entre usuários e departmentos (adicionar a tabela correta aqui)
+LEFT JOIN departments_users du ON du.user_id = u.id
+LEFT JOIN departments d ON d.id = du.department_id
+
+WHERE c.id = ($1)
+GROUP BY 
+    u.id, c.id, r.id`,
+      values: [id],
+      rowMode: 'single'
+    };
+    const { rows } = await client.query(query);
+    return rows as unknown as User[];
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateUser(user: InsertUser) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'UPDATE users SET' +
-        'name = $1, email = $2, phone_number = $3, photo_url = $4, update_at = CURRENT_TIMESTAMP' +
+        'UPDATE users SET ' +
+        'name = $1, email = $2, phone_number = $3, photo_url = $4, updated_at = CURRENT_TIMESTAMP ' +
         'WHERE id = $5',
       values: [
         user.name,

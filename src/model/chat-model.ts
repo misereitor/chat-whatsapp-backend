@@ -1,78 +1,78 @@
 import { ObjectId } from 'mongodb';
+import { Channel } from './channel-model';
+import { department } from './department-model';
+import { User } from './user-model';
 
 export interface CustomersMessage {
-  _id: ObjectId | string;
-  contactId: string;
+  id: number;
+  chatId: string;
   photoURL?: string;
   totalAttendances: number;
   totalMessages: number;
   phoneNumber: string;
   contactName: string;
-  session: string;
-  connection: string;
-  connectionType: string;
-  lastMessage: number;
-  messages: Message[];
-  inBot: boolean;
-  departmentId?: number;
-  userId?: number;
-  active: boolean;
-  dateCreateChat: number;
-  botState?: BotState;
-  segmentInfo?: any;
-}
-
-export interface Customer {
-  _id: ObjectId | string;
-  contactId: string;
-  photoURL?: string;
-  totalAttendances: number;
-  totalMessages: number;
-  phoneNumber: string;
-  contactName: string;
-  session: string;
-  connection: string;
-  connectionType: string;
+  channel: Channel;
   lastMessage: number;
   inBot: boolean;
-  departmentId?: number;
-  userId?: number;
   active: boolean;
+  department?: department;
+  user?: User;
   dateCreateChat: number;
-  botState?: BotState;
   segmentInfo?: any;
-}
-
-export interface BotState {
-  currentStage: string;
+  currentStage: 'segmentation' | 'menu' | 'service' | 'finished';
   currentQuestionId: number;
   currentSegmentationId: number;
   startedAt: number;
-  lastInteraction: number;
+  messages: Message[];
 }
 
-export interface InsertCustomer {
-  contactId: string;
+export interface Customer {
+  messages?: Message[];
+  id: number;
+  chatId: string;
   photoURL?: string;
   totalAttendances: number;
   totalMessages: number;
   phoneNumber: string;
   contactName: string;
-  session: string;
-  connection: string;
-  connectionType: string;
+  channel: Channel;
   lastMessage: number;
   inBot: boolean;
-  departmentId?: number;
-  userId?: number;
   active: boolean;
+  department?: department;
+  user?: User;
   dateCreateChat: number;
-  botState?: BotState;
-  segmentInfo?: SegmentationInfo;
+  segmentInfo?: any;
+  currentStage: 'segmentation' | 'menu' | 'service' | 'finished';
+  currentQuestionId: number;
+  currentSegmentationId: number;
+  startedAt: number;
+}
+
+export interface InsertCustomer {
+  id: number;
+  chatId: string;
+  photoURL?: string;
+  totalAttendances: number;
+  totalMessages: number;
+  phoneNumber: string;
+  contactName: string;
+  channel_id: number;
+  lastMessage: number;
+  inBot: boolean;
+  active: boolean;
+  department_id?: number;
+  user_id?: number;
+  dateCreateChat: number;
+  segmentInfo?: any;
+  currentStage: 'segmentation' | 'menu' | 'service' | 'finished';
+  currentQuestionId: number;
+  currentSegmentationId: number;
+  startedAt: number;
 }
 
 export interface InsertMessage {
-  contactId: string;
+  chatId: string;
   session: string;
   connection: string;
   id: string;
@@ -103,20 +103,9 @@ export interface Message {
   status: number;
   replyTo: ReplyTo | null;
   vCard: string[] | null;
-}
-
-export interface Message {
-  _id: ObjectId | string;
-  id: string;
-  timestamp: number;
-  fromMe: boolean;
-  participant: string | null;
-  body: string;
-  hasMedia: boolean;
-  media: Media | null;
-  status: number;
-  replyTo: ReplyTo | null;
-  vCard: string[] | null;
+  chatId: string;
+  session: string;
+  connection: string;
 }
 
 export interface ReplyTo {
@@ -148,6 +137,6 @@ export interface CreateChat {
   connection: string;
   contactName: string;
   session: string;
-  userId: number;
-  departmentId: number;
+  attendantId?: number;
+  departmentId?: number;
 }

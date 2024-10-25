@@ -6,12 +6,12 @@ export async function createChannel(channel: Channel) {
   try {
     const query = {
       text:
-        'INSERT INTO channels (company_id, channel_type_id, name, connection, is_active)' +
+        'INSERT INTO channels (company_id, channel_type, name, connection, is_active)' +
         'VALUES' +
         '($1, $2, $3, $4, $5) RETURNING *',
       values: [
         channel.company_id,
-        channel.channel_type_id,
+        channel.channel_type,
         channel.name,
         channel.connection,
         channel.is_active
@@ -27,12 +27,31 @@ export async function createChannel(channel: Channel) {
   }
 }
 
-export async function getChannelByCompanyIdAndConnection(connection: string) {
+export async function getChannelById(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'SELECT * FROM channels WHERE connection = $1',
-      values: [connection]
+      text: 'SELECT * FROM channels WHERE id = $1 ',
+      values: [id]
+    };
+    const { rows } = await client.query(query);
+    return rows[0] as unknown as Channel;
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function getChannelByConnectionAndSession(
+  connection: string,
+  session: string
+) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'SELECT * FROM channels WHERE connection = $1 and session = $2',
+      values: [connection, session]
     };
     const { rows } = await client.query(query);
     return rows[0] as unknown as Channel;
@@ -49,8 +68,8 @@ export async function updateChannel(channel: Channel) {
     const query = {
       text:
         'UPDATE channels SET' +
-        'name = $1, connection = $2, channel_type_id = $3, update_at = CURRENT_TIMESTAMP WHERE id = $5',
-      values: [channel.name, channel.connection, channel.channel_type_id]
+        'name = $1, connection = $2, channel_type = $3, update_at = CURRENT_TIMESTAMP WHERE id = $5',
+      values: [channel.name, channel.connection, channel.channel_type]
     };
     await client.query(query);
   } catch (error: any) {

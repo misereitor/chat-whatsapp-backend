@@ -10,6 +10,7 @@ export async function loginService(login: Login) {
     const userExist = await getUserByLogin(login.login);
     if (!userExist) throw new Error('Usuário e/ou senha incorreto');
     await chackPassword(userExist, login.password);
+    userExist.password = '';
     const token = createToken(userExist);
     return { token, user: userExist };
   } catch (error: any) {
@@ -48,7 +49,7 @@ function createToken(user: User) {
       {
         id: user.id,
         login: user.login,
-        roles: user.role,
+        role: user.role,
         company: user.company
       },
       SECRET_USER as string,

@@ -1,6 +1,7 @@
 import { Response, Request, Router } from 'express';
 import { WebhookMessage } from '../model/webhook-model';
 import { botInteraction } from '../services/bot-service';
+import { updateStatusMessageAdnEmit } from '../services/message-service';
 
 const routerWebhook = Router();
 
@@ -9,12 +10,16 @@ routerWebhook.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const data: WebhookMessage = req.body;
-      console.log(data);
-      if (data.event === 'message.any') {
-        await botInteraction(data, 0);
-      } //else if (data.event === 'message.ack') {
-      //updateStatusMessage(data);
-      //}
+      switch (data.event) {
+        case 'message.any':
+          await botInteraction(data, 0);
+          break;
+        case 'message.ack':
+          await updateStatusMessageAdnEmit(data);
+          break;
+        default:
+          break;
+      }
 
       res
         .status(200)

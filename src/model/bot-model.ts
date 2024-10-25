@@ -43,13 +43,13 @@ export interface BotOptions {
   id: number;
   label: string;
   text: string;
-  type: 'attendant' | 'department' | 'submenu' | 'text';
+  type: 'attendant' | 'department' | 'menu' | 'text';
   action: BotAction;
   options: BotOptions[];
 }
 
 export interface BotAction {
-  option_id?: number;
+  menu_id?: number;
   department_id?: number;
   attendant_id?: number;
   text?: string;

@@ -36,7 +36,7 @@ export async function updateContact(contact: Contact) {
       _id: contact._id,
       companyId: contact.companyId,
       $or: [
-        { userId: contact.userId },
+        { attendantId: contact.attendantId },
         { shared: true },
         { bot: true },
         { departmentId: { $in: contact.departmentId } }
@@ -60,7 +60,11 @@ export async function deleteContact(contact: Contact) {
     const query = {
       _id: contact._id,
       companyId: contact.companyId,
-      $or: [{ userId: contact.userId }, { shared: true }, { bot: true }]
+      $or: [
+        { attendantId: contact.attendantId },
+        { shared: true },
+        { bot: true }
+      ]
     };
     const result = await dbMongo.deleteOne(query);
     if (result.deletedCount === 0) {
@@ -80,7 +84,7 @@ export async function getAllContacts(filter: ContactFilter) {
     const skip = (filter.page - 1) * filter.limit;
     const query: any = {
       companyId: filter.companyId,
-      $or: [{ bot: filter.bot }, { userId: filter.userId }]
+      $or: [{ bot: filter.bot }, { attendantId: filter.attendantId }]
     };
     if (filter.departmentId) {
       query.$or.push({ departmentId: { $in: filter.departmentId } });
@@ -117,7 +121,7 @@ export async function getContactByFilter(filter: ContactFilter) {
     // 1. Busca de contatos do usuário
     const userContactsQuery: any = {
       ...baseQuery,
-      userId: filter.userId
+      attendantId: filter.attendantId
     };
 
     // 2. Busca de contatos compartilhados (departmento)

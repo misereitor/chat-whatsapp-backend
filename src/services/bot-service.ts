@@ -1,52 +1,72 @@
 import {
-  BotState,
   SendMessage,
   SegmentationInfo,
   InsertCustomer,
-  InsertMessage
+  InsertMessage,
+  Customer
 } from '../model/chat-model';
 import { WebhookMessage } from '../model/webhook-model';
 import { replaceMessage } from '../util/replaceMessage';
-import { getChannelByCompanyIdAndConnection } from '../repository/channel-repository';
+import {
+  getChannelByConnectionAndSession,
+  getChannelById
+} from '../repository/channel-repository';
 import { getAllBotsByChannelId } from '../repository/bot-repository';
 import { Bot, BotOptions, BotQuestions } from '../model/bot-model';
+import { io } from '../app';
 import {
-  findCustomerInDBByConectionAndSession,
-  getProfilePhoto,
-  insertNewCustomer,
-  redirectCustomerToDepartment,
-  updateBotStateCustomerByContactIDAndSession,
-  updateSegmentationCustomerByContactIDAndSession,
-  updateStateCustomer
-} from './customer-services';
-import {
+  getMessageByCustomer,
   insertNewMessageByCustomer,
   optionError,
   sendMessage
 } from './message-service';
+import {
+  createCustomer,
+  getCustomerByChannelAndChatId,
+  updateCustomer
+} from '../repository/chat-repository';
+import { getProfilePhoto } from './chat-services';
+import { Channel } from '../model/channel-model';
+import { getDepartmentById } from '../repository/department-repository';
+import { getUserById } from '../repository/user-repository';
 
 export async function botInteraction(
   messageWebhook: WebhookMessage,
   type: number
 ) {
-  let contact: InsertCustomer;
-  let message: InsertMessage;
-  if (type === 0) {
-    const replace = replaceMessage(messageWebhook);
-    contact = replace.contact;
-    message = replace.messagem;
+  try {
+    let contact: InsertCustomer;
+    let message: InsertMessage;
+    const channel = await getChannelByConnectionAndSession(
+      messageWebhook.me.id,
+      messageWebhook.session
+    );
 
-    if (message.fromMe) {
-      await insertNewMessageByCustomer(message);
-      return;
+    if (type === 0) {
+      const replace = replaceMessage(messageWebhook, channel.id);
+      contact = replace.contact;
+      message = replace.messagem;
+
+      if (message.fromMe) {
+        message.status = 1;
+        await insertNewMessageByCustomer(message);
+        io.emit(
+          `${message.connection}.${message.session}.update`,
+          JSON.stringify({ ...message })
+        );
+        return;
+      }
+      await botActionCustomer(contact, message, channel);
     }
-    await botActionCustomer(contact, message);
+  } catch (error: any) {
+    console.warn(error.message);
   }
 }
 
 async function botActionCustomer(
   customer: InsertCustomer,
-  message: InsertMessage
+  message: InsertMessage,
+  channel: Channel
 ) {
   try {
     const bot = await getBotByCustomerConnection(customer);
@@ -54,30 +74,35 @@ async function botActionCustomer(
     const segmentation = bot.questions.filter(
       (q) => q.type_question == 'segmentation'
     );
-    const customerExist = await findCustomerInDBByConectionAndSession(
-      customer.connection,
-      customer.session,
-      customer.contactId
+    const customerExist = await getCustomerByChannelAndChatId(
+      channel,
+      customer.chatId
     );
 
-    const pgotoURL = await getProfilePhoto(
-      customer.session,
-      customer.contactId
-    );
+    const pgotoURL = await getProfilePhoto(channel.session, customer.chatId);
     if (customerExist) {
       if (pgotoURL) customerExist.photoURL = pgotoURL.profilePictureURL;
+      if (customerExist.currentStage === 'service') {
+        return await handleServiceAction(customerExist, message);
+      }
       if (segmentation.length === 0) {
         await menuActions(bot, customerExist, message);
         return;
       }
 
-      if (customerExist.botState?.currentStage === 'segmentation') {
+      if (customerExist.currentStage === 'segmentation') {
         await segmentationActions(customerExist, message, segmentation, bot);
       } else {
         await menuActions(bot, customerExist, message);
       }
     } else {
-      await startBotForNewCustomer(customer, bot, segmentation, message);
+      await startBotForNewCustomer(
+        customer,
+        bot,
+        segmentation,
+        message,
+        channel
+      );
     }
   } catch (error: any) {
     console.warn(error.message);
@@ -85,15 +110,14 @@ async function botActionCustomer(
 }
 
 async function segmentationActions(
-  customer: InsertCustomer,
+  customer: Customer,
   message: InsertMessage,
   segmentation: BotQuestions[],
   bot: Bot
 ) {
   try {
     const stateSegmentation = segmentation.find(
-      (s) =>
-        s.sequence_segmentation === customer.botState?.currentSegmentationId
+      (s) => s.sequence_segmentation === customer.currentSegmentationId
     );
     if (!stateSegmentation) {
       await menuActions(bot, customer, message);
@@ -112,38 +136,29 @@ async function segmentationActions(
     } else {
       customer.segmentInfo = segmentationUser;
     }
-    if (!customer.botState) {
-      const botState: BotState = {
-        currentStage: 'segmentation',
-        startedAt: customer.lastMessage,
-        lastInteraction: customer.lastMessage,
-        currentSegmentationId: stateSegmentation.sequence_segmentation,
-        currentQuestionId: 0
-      };
-      customer.botState = botState;
-    }
-    if (segmentation.length > customer.botState.currentSegmentationId) {
+
+    customer.currentStage = 'segmentation';
+    customer.startedAt = customer.lastMessage;
+    customer.currentSegmentationId = stateSegmentation.sequence_segmentation;
+    customer.currentQuestionId = 0;
+
+    if (segmentation.length > customer.currentSegmentationId) {
       const send: SendMessage = {
-        chatId: customer.contactId,
-        text: segmentation[customer.botState?.currentSegmentationId].text,
-        session: customer.session
+        chatId: customer.chatId,
+        text: segmentation[customer.currentSegmentationId].text,
+        session: customer.channel.session
       };
 
-      customer.botState.currentSegmentationId =
-        customer.botState?.currentSegmentationId + 1;
-      customer.botState.lastInteraction = customer.lastMessage;
+      customer.currentSegmentationId = customer.currentSegmentationId + 1;
       await insertNewMessageByCustomer(message);
+      await updateCustomer(customer);
       setTimeout(async () => {
         await sendMessageByContactIdAndSessionAndUpdateCustomer(customer, send);
-      }, 1000);
-    } else if (
-      segmentation.length === customer.botState.currentSegmentationId
-    ) {
-      customer.botState.currentStage = 'menu';
+      }, 500);
+    } else if (segmentation.length === customer.currentSegmentationId) {
+      customer.currentStage = 'menu';
       await insertNewMessageByCustomer(message);
-      await updateBotStateCustomerByContactIDAndSession(customer);
-      await updateSegmentationCustomerByContactIDAndSession(customer);
-      await updateStateCustomer(customer);
+      await updateCustomer(customer);
       await menuActions(bot, customer, message);
     }
   } catch (error: any) {
@@ -155,18 +170,24 @@ async function startBotForNewCustomer(
   customer: InsertCustomer,
   bot: Bot,
   segmentation: BotQuestions[],
-  message: InsertMessage
+  message: InsertMessage,
+  channel: Channel
 ) {
   try {
     await createCustomerAndMessage(customer, message);
     const send: SendMessage = {
-      chatId: customer.contactId,
+      chatId: customer.chatId,
       text: bot.greeting_message,
-      session: customer.session
+      session: channel.session
     };
 
+    const customerDB = await getCustomerByChannelAndChatId(
+      channel,
+      customer.chatId
+    );
+
     if (segmentation.length === 0) {
-      await menuActions(bot, customer, message);
+      await menuActions(bot, customerDB, message);
       return;
     }
 
@@ -174,20 +195,17 @@ async function startBotForNewCustomer(
       (e) => e.sequence_segmentation === 1
     );
     if (!firstSegmentation) return;
-    const botState: BotState = {
-      currentStage: 'segmentation',
-      startedAt: customer.lastMessage,
-      lastInteraction: customer.lastMessage,
-      currentSegmentationId: 1,
-      currentQuestionId: 0
-    };
-    customer.botState = botState;
+    customerDB.currentStage = 'segmentation';
+    customerDB.startedAt = customer.lastMessage;
+    customerDB.currentSegmentationId = 1;
+    customerDB.currentQuestionId = 0;
+
     const sendSegmentation: SendMessage = {
-      chatId: customer.contactId,
+      chatId: customer.chatId,
       text: firstSegmentation.text,
-      session: customer.session
+      session: channel.session
     };
-    await sendMessageByContactIdAndSessionAndUpdateCustomer(customer, send);
+    await sendMessageByContactIdAndSessionAndUpdateCustomer(customerDB, send);
 
     setTimeout(async () => {
       await sendMessage(sendSegmentation);
@@ -199,13 +217,11 @@ async function startBotForNewCustomer(
 
 async function getBotByCustomerConnection(customer: InsertCustomer) {
   try {
-    const channel = await getChannelByCompanyIdAndConnection(
-      customer.connection
-    );
+    const channel = await getChannelById(customer.channel_id);
     if (!channel) {
       customer.inBot = false;
       customer.active = true;
-      await insertNewCustomer(customer);
+      await createCustomer(customer);
       return false;
     }
 
@@ -213,7 +229,7 @@ async function getBotByCustomerConnection(customer: InsertCustomer) {
     if (bot.length === 0) {
       customer.inBot = false;
       customer.active = true;
-      await insertNewCustomer(customer);
+      await createCustomer(customer);
       return false;
     }
 
@@ -232,12 +248,10 @@ async function getBotByCustomerConnection(customer: InsertCustomer) {
 }
 
 async function sendMessageByContactIdAndSessionAndUpdateCustomer(
-  clienteMessage: InsertCustomer,
+  clienteMessage: Customer,
   send: SendMessage
 ) {
-  await updateBotStateCustomerByContactIDAndSession(clienteMessage);
-  await updateSegmentationCustomerByContactIDAndSession(clienteMessage);
-  await updateStateCustomer(clienteMessage);
+  await updateCustomer(clienteMessage);
   await sendMessage(send);
 }
 
@@ -246,7 +260,7 @@ async function createCustomerAndMessage(
   message: InsertMessage
 ) {
   try {
-    await insertNewCustomer(customer);
+    await createCustomer(customer);
     await insertNewMessageByCustomer(message);
   } catch (error: any) {
     console.warn(error.message);
@@ -255,47 +269,50 @@ async function createCustomerAndMessage(
 
 async function menuActions(
   bot: Bot,
-  customer: InsertCustomer,
+  customer: Customer,
   message: InsertMessage
 ) {
   await insertNewMessageByCustomer(message);
   const botMenu = bot.questions.filter((q) => q.type_question == 'menu');
-  const currentQuestionId = customer.botState?.currentQuestionId;
-  if (customer.botState?.currentQuestionId === 0) {
+  const currentQuestionId = customer.currentQuestionId;
+  if (customer.currentQuestionId === 0) {
     const principalMenu = botMenu?.find((o) => o.principal);
     if (!principalMenu) return;
     const send: SendMessage = {
-      chatId: customer.contactId,
-      text: `${principalMenu.text}
-${principalMenu.options[0].id} - ${principalMenu.options[0].label}`,
-      session: customer.session
+      chatId: customer.chatId,
+      text: organizeMenuText(principalMenu),
+      session: customer.channel.session
     };
-    customer.botState.currentQuestionId = principalMenu.id;
+    customer.currentQuestionId = principalMenu.id;
     await sendMessageByContactIdAndSessionAndUpdateCustomer(customer, send);
     return;
   }
   const menu = botMenu.find((b) => b.id === currentQuestionId);
   if (!menu) return;
   if (menu.options.length === 0) return;
-  //todo para validar qual opção foi digitada e validar se é do mesmo tipo
+
   const userAction = parseFloat(message.body);
 
   if (isNaN(userAction)) {
-    await optionError(customer, 'opçao invalida!');
+    await optionError(
+      customer.chatId,
+      customer.channel.session,
+      'opçao invalida!'
+    );
     return;
   }
+
   const options = menu.options[userAction - 1];
-  if (!options) return await optionError(customer, 'Opção invalida!');
+  if (!options)
+    return await optionError(
+      customer.chatId,
+      customer.channel.session,
+      'Opção invalida!'
+    );
   await redirectMenu(customer, options, bot);
 }
 
-async function redirectMenu(
-  customer: InsertCustomer,
-  options: BotOptions,
-  bot: Bot
-) {
-  console.log(options.type);
-
+async function redirectMenu(customer: Customer, options: BotOptions, bot: Bot) {
   switch (options.type) {
     case 'department':
       await redirectCustomerToDepartmentAndEmit(
@@ -305,8 +322,18 @@ async function redirectMenu(
       );
       break;
     case 'attendant':
+      await redirectCustomerToAttendantAndEmit(
+        customer,
+        options.action.attendant_id,
+        bot
+      );
       break;
-    case 'submenu':
+    case 'menu':
+      await redirectCustomerToSubmenuAndEmit(
+        customer,
+        options.action.menu_id,
+        bot
+      );
       break;
     case 'text':
       break;
@@ -316,24 +343,139 @@ async function redirectMenu(
 }
 
 async function redirectCustomerToDepartmentAndEmit(
-  customer: InsertCustomer,
+  customer: Customer,
   department_id: number | undefined,
   bot: Bot
 ) {
   try {
-    console.log(department_id);
     if (!department_id) {
-      await optionError(customer, 'Falha na configuração interna');
+      await optionError(
+        customer.chatId,
+        customer.channel.session,
+        'Falha na configuração interna'
+      );
       return;
     }
-    await redirectCustomerToDepartment(customer, department_id);
+    const department = await getDepartmentById(department_id);
+    customer.active = true;
+    customer.inBot = false;
+    customer.department = department;
+    customer.currentStage = 'service';
+    await updateCustomer(customer);
     const send = {
-      chatId: customer.contactId,
+      chatId: customer.chatId,
       text: bot.targeting_message,
-      session: customer.session
+      session: customer.channel.session
+    };
+    await sendMessage(send);
+    setTimeout(async () => {
+      const messagesCustomer = await getMessageByCustomer(customer);
+      customer.messages = messagesCustomer;
+      io.emit(
+        `${customer.channel.connection}.${customer.channel.session}.new`,
+        JSON.stringify({ ...customer })
+      );
+    }, 2000);
+  } catch (error: any) {
+    console.warn(error.message);
+  }
+}
+
+async function redirectCustomerToAttendantAndEmit(
+  customer: Customer,
+  attendant_id: number | undefined,
+  bot: Bot
+) {
+  try {
+    if (!attendant_id) {
+      await optionError(
+        customer.chatId,
+        customer.channel.session,
+        'Falha na configuração interna'
+      );
+      return;
+    }
+    const user = await getUserById(attendant_id);
+    customer.active = true;
+    customer.inBot = false;
+    customer.user = user;
+    customer.currentStage = 'service';
+    await updateCustomer(customer);
+    const send = {
+      chatId: customer.chatId,
+      text: bot.targeting_message,
+      session: customer.channel.session
     };
     await sendMessage(send);
     //todo emit
+    setTimeout(async () => {
+      const messagesCustomer = await getMessageByCustomer(customer);
+      customer.messages = messagesCustomer;
+      io.emit(
+        `${customer.channel.connection}.${customer.channel.session}.new`,
+        JSON.stringify({ ...customer })
+      );
+    }, 2000);
+  } catch (error: any) {
+    console.warn(error.message);
+  }
+}
+
+async function redirectCustomerToSubmenuAndEmit(
+  customer: Customer,
+  menu_id: number | undefined,
+  bot: Bot
+) {
+  try {
+    if (!menu_id) {
+      await optionError(
+        customer.chatId,
+        customer.channel.session,
+        'Falha na configuração interna'
+      );
+      return;
+    }
+    customer.active = true;
+    customer.inBot = false;
+    customer.currentQuestionId = menu_id;
+    const options = bot.questions.find((q) => q.id === menu_id);
+    if (!options)
+      return await optionError(
+        customer.chatId,
+        customer.channel.session,
+        'Falha na configuração interna'
+      );
+    await updateCustomer(customer);
+    const send = {
+      chatId: customer.chatId,
+      text: organizeMenuText(options),
+      session: customer.channel.session
+    };
+    await sendMessage(send);
+  } catch (error: any) {
+    console.warn(error.message);
+  }
+}
+
+function organizeMenuText(menu: BotQuestions) {
+  let options = '';
+  menu.options.forEach((option) => {
+    options += `${option.id} - ${option.label}\n`;
+  });
+  return `${menu.text}:
+
+${options}`;
+}
+
+async function handleServiceAction(customer: Customer, message: InsertMessage) {
+  try {
+    customer.totalMessages += 1;
+    await updateCustomer(customer);
+    await insertNewMessageByCustomer(message);
+    io.emit(
+      `${message.connection}.${message.session}.update`,
+      JSON.stringify({ ...message })
+    );
   } catch (error: any) {
     console.warn(error.message);
   }

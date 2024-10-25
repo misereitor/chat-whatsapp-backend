@@ -30,6 +30,40 @@ export async function createdepartmentRepository(department: Createdepartment) {
   }
 }
 
+export async function getDepartmentById(id: number) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'SELECT * FROM departments WHERE id = $1',
+      values: [id],
+      rowMode: 'single'
+    };
+    const { rows } = await client.query(query);
+    return rows[0] as unknown as department;
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function getDepartmentByCompanyId(id: number) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'SELECT * FROM departments WHERE company_id = $1',
+      values: [id],
+      rowMode: 'single'
+    };
+    const { rows } = await client.query(query);
+    return rows as unknown as department[];
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
 export async function associatedepartmentForUserRepository(
   user_id: number,
   department_id: number
@@ -60,6 +94,23 @@ export async function disassociatedepartmentForUserRepository(
     const query = {
       text: 'DELETE FROM departments_users WHERE user_id = $1 AND department_id = $2',
       values: [user_id, department_id]
+    };
+    await client.query(query);
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function disassociateAllDepartmentForUserRepository(
+  user_id: number
+) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'DELETE FROM departments_users WHERE user_id = $1',
+      values: [user_id]
     };
     await client.query(query);
   } catch (error: any) {

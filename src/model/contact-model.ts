@@ -8,7 +8,7 @@ export interface ContactRequest {
   company: string;
   notes: string;
   companyId: number;
-  userId: number;
+  attendantId: number;
   bot: boolean;
   departmentId: number[];
 }
@@ -22,7 +22,7 @@ export interface Contact {
   company: string;
   notes: string;
   companyId: number;
-  userId: number;
+  attendantId: number;
   bot: boolean;
   departmentId: number[];
 }
@@ -35,7 +35,7 @@ export interface ContactResponse {
 
 export interface ContactFilter {
   companyId: number;
-  userId?: number;
+  attendantId?: number;
   departmentId?: number[];
   bot?: boolean;
   page: number;

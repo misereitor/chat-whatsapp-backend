@@ -1,9 +1,17 @@
+import { io } from '../app';
 import { connectToMongo } from '../config/mongo_db.conf';
 import {
-  InsertCustomer,
+  Customer,
   InsertMessage,
+  Message,
   SendMessage
 } from '../model/chat-model';
+import { WebhookMessage } from '../model/webhook-model';
+import { getChannelByConnectionAndSession } from '../repository/channel-repository';
+import { getCustomerByChannelAndChatId } from '../repository/chat-repository';
+import { replaceMessageUpdateStatus } from '../util/replaceMessage';
+import { extractThumbnail } from '../util/videoThumbnail';
+import { uploadFileService } from './aws/s3-service';
 
 const {
   API_URL_WHATSAPP_NO_OFFICIAL,
@@ -13,11 +21,30 @@ const {
 
 export async function insertNewMessageByCustomer(message: InsertMessage) {
   try {
+    if (
+      message.hasMedia &&
+      message.media?.mimetype?.split('/')[0] === 'video' &&
+      message.media.url
+    ) {
+      const nameFile = message.media.url
+        .split('/')
+        .slice(-1)[0]
+        .split('?')[0]
+        .split('.')[0];
+      const blobMessage = await getThumbnailVideo(message.media.url);
+      if (!blobMessage) return;
+      const thumbnail = await extractThumbnail(blobMessage);
+      const blobThumbnail = new Blob([thumbnail], {
+        type: message.media.mimetype
+      });
+      await uploadFileService(`thumbnail/${nameFile}.png`, blobThumbnail);
+    }
     const mongoClient = await connectToMongo();
     const dbMessages = mongoClient.db(MONGO_DB).collection('messages');
-    await dbMessages.insertOne({
+    const insertMessage = await dbMessages.insertOne({
       ...message
     });
+    return insertMessage;
   } catch (error: any) {
     console.warn(error.message);
   }
@@ -43,11 +70,95 @@ export async function sendMessage(message: SendMessage) {
   }
 }
 
-export async function optionError(customer: InsertCustomer, message: string) {
+export async function optionError(
+  chatId: string,
+  session: string,
+  message: string
+) {
   const send: SendMessage = {
-    chatId: customer.contactId,
+    chatId,
     text: message,
-    session: customer.session
+    session
   };
   await sendMessage(send);
+}
+
+export async function getMessageByCustomer(customer: Customer) {
+  try {
+    const mongoClient = await connectToMongo();
+    const dbMessages = mongoClient.db(MONGO_DB).collection('messages');
+    const message = await dbMessages
+      .find({
+        chatId: customer.chatId,
+        session: customer.channel.session,
+        connection: customer.channel.connection
+      })
+      .toArray();
+    return message as unknown as Message[];
+  } catch (error: any) {
+    console.warn(error.message);
+  }
+}
+
+export async function updateStatusMessageAdnEmit(message: WebhookMessage) {
+  try {
+    const messageFiltred = replaceMessageUpdateStatus(message);
+    messageFiltred.chatId = messageFiltred.chatId.replace(/:\d+/, '');
+    messageFiltred.id = messageFiltred.id.replace(/:\d+/, '');
+    const channel = await getChannelByConnectionAndSession(
+      messageFiltred.connection,
+      messageFiltred.session
+    );
+
+    const customerExist = await getCustomerByChannelAndChatId(
+      channel,
+      messageFiltred.chatId.replace(/:\d+/, '')
+    );
+
+    if (customerExist) {
+      await updateStatusMessageByConectionAndSession(messageFiltred);
+      if (!customerExist.active) return;
+      io.emit(
+        `${message.me.id}.${message.session}.status`,
+        JSON.stringify({ ...messageFiltred })
+      );
+    } else {
+      console.warn('Message not found after retries.');
+    }
+  } catch (error: any) {
+    console.warn(error.message);
+  }
+}
+
+async function updateStatusMessageByConectionAndSession(message: Message) {
+  try {
+    const mongoClient = await connectToMongo();
+    const dbMessages = mongoClient.db(MONGO_DB).collection('messages');
+    await dbMessages.updateOne(
+      {
+        id: message.id,
+        connection: message.connection,
+        session: message.session
+      },
+      { $set: { status: message.status } }
+    );
+  } catch (error: any) {
+    console.warn(error.message);
+  }
+}
+
+async function getThumbnailVideo(url: string) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'X-Api-Key': String(SECRET_AIP_WHATSAPP_NO_OFFICIAL)
+      }
+    });
+    if (response.ok) {
+      const blob = await response.blob();
+      return blob;
+    }
+  } catch (error: any) {
+    console.warn(error.message);
+  }
 }

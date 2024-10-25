@@ -1,4 +1,5 @@
 import { Company } from '../model/company-model';
+import { User } from '../model/user-model';
 import {
   activeCompany,
   createCompany,
@@ -6,6 +7,7 @@ import {
   getAllCompanies,
   getCompanyByCPNJ,
   getCompanyById,
+  getCompanyByRevendedorId,
   updateCompany
 } from '../repository/company-repository';
 
@@ -63,11 +65,43 @@ export async function getCompanyByIdServices(id: number) {
   }
 }
 
-export async function getAllCompanyServices() {
+export async function getAllCompanyServices(user: User) {
   try {
-    const company = await getAllCompanies();
-    return company;
+    switch (user.role.id) {
+      case 1:
+        return await getCompanyBySuperAdmin();
+      case 2:
+        return await getCompanyByRevendedor(user);
+      case 3:
+        return [await getCompanyByIdServices(user.company.id)];
+      case 4:
+        return await getCompanyBySupervisor(user);
+
+      default:
+        break;
+    }
   } catch (error: any) {
     throw new Error(error.message);
   }
+}
+
+async function getCompanyBySuperAdmin() {
+  return await getAllCompanies();
+}
+
+async function getCompanyByRevendedor(user: User) {
+  return [await getCompanyByRevendedorId(user.company.id)];
+}
+
+async function getCompanyBySupervisor(user: User) {
+  const company: Company[] = [];
+  for (const department of user.departments) {
+    if (company.length == 0) {
+      company.push(await getCompanyByIdServices(department.id));
+    } else {
+      const companyDepatment = await getCompanyByIdServices(department.id);
+      company[0].users.push(...companyDepatment.users);
+    }
+  }
+  return company;
 }

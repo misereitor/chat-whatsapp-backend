@@ -10,8 +10,10 @@ export async function superadminMiddleware(
   const token: string | undefined = req.headers.authorization;
   const body: ClienteRequest = req.body;
   const response: any = await valideTokenUserAdminService(token);
-  if (response.roles[0].company.id !== body.company_id)
-    throw new Error('não autorizado');
+  if (response.role[0].company.id !== body.company_id)
+    throw new Error(
+      JSON.stringify({ success: false, message: 'não autorizado' })
+    );
   next();
 }
 
@@ -25,10 +27,14 @@ export async function clientChatMiddleware(
     const token: string | undefined = req.headers.authorization;
     const body: ClienteRequest = req.body;
     const response: any = await valideTokenUserAdminService(token);
-    if (response.company.id !== body.company_id)
-      throw new Error('não autorizado');
-    if (!roleClient.includes(response.roles.name))
-      throw new Error('não autorizado');
+    if (response.company.id != body.company_id)
+      throw new Error(
+        JSON.stringify({ success: false, message: 'não autorizado' })
+      );
+    if (!roleClient.includes(response.role.name))
+      throw new Error(
+        JSON.stringify({ success: false, message: 'não autorizado' })
+      );
     next();
   } catch (error: any) {
     res.status(500).send(error.message);
@@ -45,11 +51,15 @@ export async function clientSupervisorMiddleware(
     const token: string | undefined = req.headers.authorization;
     const body: ClienteRequest = req.body;
     const response: any = await valideTokenUserAdminService(token);
-    if (response.roles.id === 1) return next();
-    if (response.company.id !== body.company_id)
-      throw new Error('não autorizado');
-    if (!roleClient.includes(response.roles.name))
-      throw new Error('não autorizado');
+    if (response.role.id === 1) return next();
+    if (response.company.id != body.company_id)
+      throw new Error(
+        JSON.stringify({ success: false, message: 'não autorizado' })
+      );
+    if (!roleClient.includes(response.role.name))
+      throw new Error(
+        JSON.stringify({ success: false, message: 'não autorizado' })
+      );
     return next();
   } catch (error: any) {
     res.status(500).send(error.message);

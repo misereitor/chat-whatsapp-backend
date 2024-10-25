@@ -71,7 +71,7 @@ export const schemaUpdateUser = z.object({
       });
     }
   }),
-  email: z.string().email('Insira um e-mail válido')
+  email: z.string().email('Insira um e-mail válido').optional()
 });
 
 export const schemaUpdatePassword = z.object({

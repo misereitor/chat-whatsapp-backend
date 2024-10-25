@@ -1,0 +1,6 @@
+1 - sincronizar os contatos do waha com a agenda do app
+2 - envio de media
+3 - sincronizar as mensagens redebida do whatsapp com a do app.
+4 - sincronizar mensagens com editado, excluido.
+5 - enviar presença
+6 - security socket.io
