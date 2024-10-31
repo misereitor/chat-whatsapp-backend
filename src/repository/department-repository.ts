@@ -47,6 +47,26 @@ export async function getDepartmentById(id: number) {
   }
 }
 
+export async function getDepartmentByCompanyIdAndName(
+  departmentName: string,
+  company_id: number
+) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'SELECT * FROM departments WHERE name LIKE $1 AND company_id = $2',
+      values: [departmentName, company_id],
+      rowMode: 'single'
+    };
+    const { rows } = await client.query(query);
+    return rows[0] as unknown as department;
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
 export async function getDepartmentByCompanyId(id: number) {
   const client = await pool.connect();
   try {
@@ -125,11 +145,12 @@ export async function updatedepartmentRepository(department: Updatedepartment) {
   try {
     const query = {
       text:
-        'UPDATE departments SET' +
-        'name = $1, update_at = CURRENT_TIMESTAMP WHERE id = $5',
+        'UPDATE departments SET ' +
+        'name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
       values: [department.name, department.department_id]
     };
-    await client.query(query);
+    const { rows } = await client.query(query);
+    return rows[0] as unknown as department;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {

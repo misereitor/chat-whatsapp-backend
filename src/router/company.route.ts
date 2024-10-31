@@ -2,11 +2,12 @@ import { Response, Request, Router } from 'express';
 import { clientSupervisorMiddleware } from '../middleware';
 import {
   createCompanyServices,
+  getAllCompanyForSelect,
   getAllCompanyServices,
   getCompanyByCPNJServices,
   getCompanyByIdServices
 } from '../services/company-service';
-import { Company } from '../model/company-model';
+import { CreateCompany } from '../model/company-model';
 import { valideTokenUserAdminService } from '../services/auth-service';
 
 const routerCompany = Router();
@@ -16,7 +17,7 @@ routerCompany.post(
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const company: Company = req.body;
+      const company: CreateCompany = req.body;
       const response = await createCompanyServices(company);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
@@ -61,6 +62,20 @@ routerCompany.post(
     try {
       const { cnpj } = req.params;
       const response = await getCompanyByCPNJServices(cnpj);
+      res.status(200).json({ success: true, data: response });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+);
+
+routerCompany.post(
+  '/company/get-company-for-select',
+  clientSupervisorMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const request = req.body;
+      const response = await getAllCompanyForSelect(request.user);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });

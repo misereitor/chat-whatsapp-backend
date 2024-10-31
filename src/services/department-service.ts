@@ -1,19 +1,25 @@
-import { Createdepartment } from '../model/department-model';
+import { Createdepartment, Updatedepartment } from '../model/department-model';
+import { InsertUser } from '../model/user-model';
 import {
   associatedepartmentForUserRepository,
   createdepartmentRepository,
+  deletedepartmentRepository,
   disassociateAllDepartmentForUserRepository,
   disassociatedepartmentForUserRepository,
-  getDepartmentByCompanyId
+  getDepartmentByCompanyId,
+  getDepartmentByCompanyIdAndName,
+  getDepartmentById,
+  updatedepartmentRepository
 } from '../repository/department-repository';
 import { getUserById } from '../repository/user-repository';
 
-export async function createdepartmentService(
-  department: Createdepartment,
-  user_id: number
-) {
+export async function createdepartmentService(department: Createdepartment) {
   try {
-    await checkPermissionUserIsAdmin(user_id, department.company_id);
+    const departmentExist = await getDepartmentByCompanyIdAndName(
+      department.name,
+      department.company_id
+    );
+    if (departmentExist) throw new Error('Department already exists');
     const createddepartment = await createdepartmentRepository(department);
     return createddepartment;
   } catch (error: any) {
@@ -38,19 +44,18 @@ export async function associatedepartmentService(
   }
 }
 
-export async function disassociatedepartmentService(
-  department_id: number,
-  user_id: number
-) {
+export async function disassociatedepartmentService(userUpate: InsertUser) {
   try {
-    const user = await getUserById(user_id);
+    const user = await getUserById(userUpate.id);
     if (!user) throw new Error('User not found');
-    const departmentExist = user.departments.find(
-      (department) => department.id !== department_id
-    );
-    if (!departmentExist) return;
-    console.log(departmentExist);
-    await disassociatedepartmentForUserRepository(user_id, departmentExist.id);
+    user.departments.forEach(async (department) => {
+      const departmentExist = userUpate.departments?.find(
+        (departmentUser) => departmentUser.id === department.id
+      );
+      if (!departmentExist) {
+        await disassociatedepartmentForUserRepository(user.id, department.id);
+      }
+    });
   } catch (error: any) {
     throw new Error(error.message);
   }
@@ -73,17 +78,22 @@ export async function getDepatmentByCompanyIdService(company_id: number) {
   }
 }
 
-async function checkPermissionUserIsAdmin(user_id: number, company_id: number) {
-  const user = await getUserById(user_id);
-  if (!user) throw new Error('User not found');
-  if (user.role.id === 1) {
-    return true;
+export async function updateDepatmentService(department: Updatedepartment) {
+  try {
+    const getDepartment = await getDepartmentById(department.department_id);
+    if (!getDepartment) throw new Error('Departamento não encontrado');
+    const depatments = await updatedepartmentRepository(department);
+    return depatments;
+  } catch (error: any) {
+    throw new Error(error.message);
   }
-  if (user.company.id !== company_id) {
-    throw new Error('User not authorized');
+}
+
+export async function deleteDepatmentService(department_id: number) {
+  try {
+    const depatments = await deletedepartmentRepository(department_id);
+    return depatments;
+  } catch (error: any) {
+    throw new Error(error.message);
   }
-  if (user.role.id === 3) {
-    return true;
-  }
-  throw new Error('User not authorized');
 }

@@ -26,6 +26,7 @@ import {
   disassociateAllDepartmentService,
   disassociatedepartmentService
 } from './department-service';
+import { CreateCompany } from '../model/company-model';
 
 export async function createUserServices(insertUser: InsertUser) {
   try {
@@ -45,6 +46,29 @@ export async function createUserServices(insertUser: InsertUser) {
   }
 }
 
+export async function replaceUserByCreateCompanyService(
+  company: CreateCompany
+) {
+  const insertUser: InsertUser = {
+    name: company.company_name,
+    email: company.email,
+    login: company.login,
+    password: company.password,
+    is_active: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    role:
+      company.type === 'reseller'
+        ? { id: 2, name: 'revendedor' }
+        : { id: 3, name: 'admin' },
+    phone_number: '',
+    id: 0,
+    company_id: 0
+  };
+  await validateBeforeCreateCompany(insertUser);
+  return insertUser;
+}
+
 export async function getUserByIdService(id: number) {
   try {
     const user = await getUserById(id);
@@ -60,10 +84,10 @@ export async function updateUserService(user: InsertUser) {
     if (user.photo) {
       user.photo_url = await updatePhotoS3(user);
     }
+    await disassociatedepartmentService(user);
     if (user.departments && user.departments?.length > 0) {
       for (const department of user.departments) {
         await associatedepartmentService(department.id, user.id);
-        await disassociatedepartmentService(department.id, user.id);
       }
     } else {
       await disassociateAllDepartmentService(user.id);
@@ -176,6 +200,19 @@ async function validateBeforeCreate(user: InsertUser) {
       totalAtentente >= company.plan.max_users
     )
       throw new Error('Máximo de usuário Atendente atingindo');
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+async function validateBeforeCreateCompany(user: InsertUser) {
+  try {
+    schemaAddUser.parse(user);
+    const userExist = await getUserByLogin(user.login);
+    const roleUser = await gerRoleForId(user.role.id);
+    Promise.all([userExist, roleUser]);
+    if (!roleUser) throw new Error('Cargo não encontrado');
+    if (userExist) throw new Error('Usuário já está em uso');
   } catch (error: any) {
     throw new Error(error.message);
   }

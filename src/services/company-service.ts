@@ -1,4 +1,5 @@
-import { Company } from '../model/company-model';
+import { Company, CreateCompany } from '../model/company-model';
+import { AssociatePlan } from '../model/plans-model';
 import { User } from '../model/user-model';
 import {
   activeCompany,
@@ -8,15 +9,38 @@ import {
   getCompanyByCPNJ,
   getCompanyById,
   getCompanyByRevendedorId,
+  getCompanyForSelectByRevendedor,
+  getCompanyForSelectSuperAdmin,
   updateCompany
 } from '../repository/company-repository';
+import { AssociatePlanService } from './plan-service';
+import {
+  createUserServices,
+  replaceUserByCreateCompanyService
+} from './user-services';
 
-export async function createCompanyServices(company: Company) {
+export async function createCompanyServices(company: CreateCompany) {
   try {
     const companyExist = await getCompanyByCPNJServices(company.cnpj);
+    const createUser = await replaceUserByCreateCompanyService(company);
+
     if (companyExist && companyExist.type === company.type)
       throw new Error('CNPJ já cadastrado e é ' + companyExist.type);
+
     const newCompany = await createCompany(company);
+
+    const plan: AssociatePlan = {
+      company_id: newCompany.id,
+      plan_id: 1
+    };
+
+    await AssociatePlanService(plan);
+
+    createUser.company_id = newCompany.id;
+    createUser.id = newCompany.id;
+
+    await createUserServices(createUser);
+
     return newCompany;
   } catch (error: any) {
     throw new Error(error.message);
@@ -85,6 +109,21 @@ export async function getAllCompanyServices(user: User) {
   }
 }
 
+export async function getAllCompanyForSelect(user: User) {
+  try {
+    switch (user.role.id) {
+      case 1:
+        return await getCompanyBySuperAdminForSelect();
+      case 2:
+        return await getCompanyByRevendedorForSelect(user);
+      default:
+        break;
+    }
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
 async function getCompanyBySuperAdmin() {
   return await getAllCompanies();
 }
@@ -104,4 +143,12 @@ async function getCompanyBySupervisor(user: User) {
     }
   }
   return company;
+}
+
+async function getCompanyBySuperAdminForSelect() {
+  return await getCompanyForSelectSuperAdmin();
+}
+
+async function getCompanyByRevendedorForSelect(user: User) {
+  return await getCompanyForSelectByRevendedor(user.company.id);
 }

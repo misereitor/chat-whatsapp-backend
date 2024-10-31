@@ -13,6 +13,18 @@ export interface Company {
   users: UserCompany[];
   modules: modules[];
   plan: plan;
+  dealer_id: number;
+}
+
+export interface CreateCompany {
+  company_name: string;
+  trade_name: string;
+  type: 'master' | 'reseller' | 'client';
+  cnpj: string;
+  email: string;
+  dealer_id: number;
+  login: string;
+  password: string;
 }
 
 export interface UserCompany {

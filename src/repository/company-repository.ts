@@ -1,25 +1,55 @@
 import pool from '../config/pg_db.conf';
-import { Company } from '../model/company-model';
+import { Company, CreateCompany } from '../model/company-model';
 
-export async function createCompany(company: Company) {
+export async function createCompany(company: CreateCompany) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'INSERT INTO companies (company_name, trade_name, type, cnpj, is_active)' +
+        'INSERT INTO companies (company_name, trade_name, type, cnpj)' +
         'VALUES' +
-        '($1, $2, $3, $4, $5) RETURNING *',
+        '($1, $2, $3, $4) RETURNING *',
       values: [
         company.company_name,
         company.trade_name,
         company.type,
-        company.cnpj,
-        company.is_active
+        company.cnpj
       ],
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows as unknown as Company;
+    return rows[0] as unknown as Company;
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function getCompanyForSelectSuperAdmin() {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'select * from companies'
+    };
+    const { rows } = await client.query(query);
+    return rows as unknown as Company[];
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function getCompanyForSelectByRevendedor(dealer_id: number) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'select * from companies where dealer_id = $1',
+      values: [dealer_id]
+    };
+    const { rows } = await client.query(query);
+    return rows as unknown as Company[];
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -687,7 +717,7 @@ GROUP BY
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows as unknown as Company;
+    return rows[0] as unknown as Company;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {

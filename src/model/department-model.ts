@@ -13,7 +13,6 @@ export interface Createdepartment {
   business_hours_id?: number;
   name: string;
   is_active: boolean;
-  user_id: number;
 }
 
 export interface Updatedepartment {

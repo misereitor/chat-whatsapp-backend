@@ -10,7 +10,7 @@ export async function superadminMiddleware(
   const token: string | undefined = req.headers.authorization;
   const body: ClienteRequest = req.body;
   const response: any = await valideTokenUserAdminService(token);
-  if (response.role[0].company.id !== body.company_id)
+  if (response.role.id !== body.company_id)
     throw new Error(
       JSON.stringify({ success: false, message: 'não autorizado' })
     );

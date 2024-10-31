@@ -10,6 +10,7 @@ import { routerContacts } from './router/contacts.router';
 import { routerdepartment } from './router/department.router';
 import { config } from 'dotenv';
 import { routerCompany } from './router/company.route';
+import { routerPlans } from './router/plan.router';
 
 config();
 
@@ -40,5 +41,6 @@ app.use('/api', routerAuth);
 app.use('/api', routerContacts);
 app.use('/api', routerdepartment);
 app.use('/api', routerCompany);
+app.use('/api', routerPlans);
 
 export { app, server, io };

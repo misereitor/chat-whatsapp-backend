@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS companies (
     cnpj VARCHAR(14) NOT NULL UNIQUE,
     type VARCHAR(50),
     dealer_id INTEGER,
-    is_active BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (dealer_id) REFERENCES companies(id)

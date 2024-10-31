@@ -76,11 +76,3 @@ export function validateName(name: string) {
   }
   return false;
 }
-
-export function validateNameIsNumber(name: string) {
-  if (!name) {
-    return;
-  }
-  const regex = /^[A-Za-záàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ ]+$/;
-  return !regex.test(name);
-}
