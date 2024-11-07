@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS companies (
 CREATE TABLE IF NOT EXISTS plans (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    description VARCHAR,
     max_admins INTEGER NOT NULL DEFAULT 1,
     max_supervisors INTEGER NOT NULL,
     max_users INTEGER NOT NULL,
@@ -23,7 +24,7 @@ CREATE TABLE IF NOT EXISTS plans (
 CREATE TABLE IF NOT EXISTS modules (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description TEXT,
+    description VARCHAR,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

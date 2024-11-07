@@ -27,6 +27,7 @@ import {
   disassociatedepartmentService
 } from './department-service';
 import { CreateCompany } from '../model/company-model';
+import { AssociateDepartment } from '../model/department-model';
 
 export async function createUserServices(insertUser: InsertUser) {
   try {
@@ -87,7 +88,11 @@ export async function updateUserService(user: InsertUser) {
     await disassociatedepartmentService(user);
     if (user.departments && user.departments?.length > 0) {
       for (const department of user.departments) {
-        await associatedepartmentService(department.id, user.id);
+        const associate: AssociateDepartment = {
+          user_id: user.id,
+          department_id: department.id
+        };
+        await associatedepartmentService(associate);
       }
     } else {
       await disassociateAllDepartmentService(user.id);

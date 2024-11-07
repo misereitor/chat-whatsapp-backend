@@ -8,15 +8,19 @@ import {
   getCompanyByIdServices
 } from '../services/company-service';
 import { CreateCompany } from '../model/company-model';
-import { valideTokenUserAdminService } from '../services/auth-service';
+import { securityRouter } from '../services/security/security-service';
 
 const routerCompany = Router();
 
 routerCompany.post(
-  '/company/create-company',
+  '/:company_id/company/create-company',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const company: CreateCompany = req.body;
       const response = await createCompanyServices(company);
       res.status(200).json({ success: true, data: response });
@@ -26,14 +30,16 @@ routerCompany.post(
   }
 );
 
-routerCompany.post(
-  '/company/get-all-company',
+routerCompany.get(
+  '/:company_id/company/get-all-company',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const token: string | undefined = req.headers.authorization;
-      const responseToken: any = await valideTokenUserAdminService(token);
-      const response = await getAllCompanyServices(responseToken);
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      const user: any = await securityRouter(token, Number(company_id));
+
+      const response = await getAllCompanyServices(user);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -41,11 +47,15 @@ routerCompany.post(
   }
 );
 
-routerCompany.post(
-  '/company/get-company-by-id/:id',
+routerCompany.get(
+  '/:company_id/company/get-company-by-id/:id',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { id } = req.params;
       const response = await getCompanyByIdServices(Number(id));
       res.status(200).json({ success: true, data: response });
@@ -55,11 +65,15 @@ routerCompany.post(
   }
 );
 
-routerCompany.post(
-  '/company/get-company-by-cnpj/:cnpj',
+routerCompany.get(
+  '/:company_id/company/get-company-by-cnpj/:cnpj',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { cnpj } = req.params;
       const response = await getCompanyByCPNJServices(cnpj);
       res.status(200).json({ success: true, data: response });
@@ -69,13 +83,16 @@ routerCompany.post(
   }
 );
 
-routerCompany.post(
-  '/company/get-company-for-select',
+routerCompany.get(
+  '/:company_id/company/get-company-for-select/',
   clientSupervisorMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const request = req.body;
-      const response = await getAllCompanyForSelect(request.user);
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      const user = await securityRouter(token, Number(company_id));
+
+      const response = await getAllCompanyForSelect(user);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });

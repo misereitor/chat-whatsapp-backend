@@ -47,10 +47,7 @@ function createToken(user: User) {
   try {
     const token = JWT.sign(
       {
-        id: user.id,
-        login: user.login,
-        role: user.role,
-        company: user.company
+        user
       },
       SECRET_USER as string,
       {

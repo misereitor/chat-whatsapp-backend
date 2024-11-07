@@ -8,14 +8,19 @@ import {
   getContactByFilterService,
   updateContactService
 } from '../services/contacts-service';
+import { securityRouter } from '../services/security/security-service';
 
 const routerContacts = Router();
 
 routerContacts.post(
-  '/create-contact',
+  '/:company_id/create-contact',
   clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { contact } = req.body;
       const response = await createContactService(contact);
 
@@ -27,10 +32,14 @@ routerContacts.post(
 );
 
 routerContacts.post(
-  '/create-all-contacts',
+  '/:company_id/create-all-contacts',
   clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { contacts } = req.body;
       const response = createAllContactsService(contacts);
       res.status(200).json({ success: true, data: response });
@@ -41,10 +50,14 @@ routerContacts.post(
 );
 
 routerContacts.put(
-  '/update-contact',
+  '/:company_id/update-contact',
   clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { contact } = req.body;
       const response = updateContactService(contact);
       res.status(200).json({ success: true, data: response });
@@ -55,10 +68,14 @@ routerContacts.put(
 );
 
 routerContacts.delete(
-  '/delete-contact',
+  '/:company_id/delete-contact',
   clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { contact } = req.body;
       const response = deleteContactService(contact);
       res.status(200).json({ success: true, data: response });
@@ -68,11 +85,15 @@ routerContacts.delete(
   }
 );
 
-routerContacts.post(
-  '/get-all-contacts',
+routerContacts.get(
+  '/:company_id/get-all-contacts',
   clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { filter } = req.body;
       const response = await getAllContactsService(filter);
       res.status(200).json({ success: true, data: response });
@@ -82,11 +103,15 @@ routerContacts.post(
   }
 );
 
-routerContacts.post(
-  '/get-contact',
+routerContacts.get(
+  '/:company_id/get-contact',
   clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { filter } = req.body;
       const response = await getContactByFilterService(filter);
       res.status(200).json({ success: true, data: response });

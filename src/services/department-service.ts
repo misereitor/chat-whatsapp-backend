@@ -1,4 +1,8 @@
-import { Createdepartment, Updatedepartment } from '../model/department-model';
+import {
+  AssociateDepartment,
+  Createdepartment,
+  Updatedepartment
+} from '../model/department-model';
 import { InsertUser } from '../model/user-model';
 import {
   associatedepartmentForUserRepository,
@@ -28,17 +32,19 @@ export async function createdepartmentService(department: Createdepartment) {
 }
 
 export async function associatedepartmentService(
-  department_id: number,
-  user_id: number
+  associate: AssociateDepartment
 ) {
   try {
-    const user = await getUserById(user_id);
+    const user = await getUserById(associate.user_id);
     if (!user) throw new Error('User not found');
     const departmentExist = user.departments.find(
-      (department) => department.id === department_id
+      (department) => department.id === associate.department_id
     );
     if (departmentExist) return;
-    await associatedepartmentForUserRepository(user_id, department_id);
+    await associatedepartmentForUserRepository(
+      associate.user_id,
+      associate.department_id
+    );
   } catch (error: any) {
     throw new Error(error.message);
   }

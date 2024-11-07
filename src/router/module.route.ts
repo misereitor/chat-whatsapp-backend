@@ -1,22 +1,22 @@
 import { Response, Request, Router } from 'express';
 import { superadminMiddleware } from '../middleware';
 import {
-  AssociatePlanService,
-  createPlanService,
-  deletePlanService,
-  getAllPlansService,
-  updatePlanService
-} from '../services/plan-service';
+  AssociateModuleService,
+  createModuleService,
+  deleteModuleService,
+  getAllModulesService,
+  updateModuleService
+} from '../services/module-service';
 
-const routerPlans = Router();
+const routerModules = Router();
 
-routerPlans.post(
-  '/plan/create',
+routerModules.post(
+  '/module/create',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const data = req.body;
-      const response = await createPlanService(data.plan);
+      const { module } = req.body;
+      const response = await createModuleService(module);
 
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
@@ -25,12 +25,12 @@ routerPlans.post(
   }
 );
 
-routerPlans.get(
-  '/plan/get-all',
+routerModules.get(
+  '/module/get-all',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const response = await getAllPlansService();
+      const response = await getAllModulesService();
 
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
@@ -39,13 +39,13 @@ routerPlans.get(
   }
 );
 
-routerPlans.put(
-  '/plan/associate',
+routerModules.put(
+  '/module/associate',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const data = req.body;
-      const response = await AssociatePlanService(data.plan);
+      const { module } = req.body;
+      const response = await AssociateModuleService(module);
 
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
@@ -54,13 +54,13 @@ routerPlans.put(
   }
 );
 
-routerPlans.put(
-  '/plan/update',
+routerModules.put(
+  '/module/update',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const { plan } = req.body;
-      await updatePlanService(plan);
+      const { module } = req.body;
+      await updateModuleService(module);
       res.status(200).json({ success: true });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -68,13 +68,13 @@ routerPlans.put(
   }
 );
 
-routerPlans.delete(
-  '/plan/delete/:id',
+routerModules.delete(
+  '/module/delete/:id',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      await deletePlanService(Number(id));
+      await deleteModuleService(Number(id));
       res.status(200).json({ success: true });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -82,4 +82,4 @@ routerPlans.delete(
   }
 );
 
-export { routerPlans };
+export { routerModules };

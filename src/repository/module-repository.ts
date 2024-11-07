@@ -1,18 +1,18 @@
 import pool from '../config/pg_db.conf';
-import { AssociatePlan, Plan } from '../model/plans-model';
+import { AssociateModule, Modules } from '../model/module-model';
 
-export async function createPlansRepository(plan: Plan) {
+export async function createModuleRepository(modules: Modules) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'INSERT INTO plans (name, max_admins, max_supervisors, max_users) ' +
+        'INSERT INTO modules (name, description) ' +
         'VALUES ' +
         '($1, $2, $3, $4) RETURNING *',
-      values: [plan.name, plan.max_admins, plan.max_supervisors, plan.max_users]
+      values: [modules.name, modules.description]
     };
     const { rows } = await client.query(query);
-    return rows[0] as unknown as Plan;
+    return rows[0] as unknown as Modules;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -20,14 +20,14 @@ export async function createPlansRepository(plan: Plan) {
   }
 }
 
-export async function getAllPlansRepository() {
+export async function getAllModulesRepository() {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'SELECT * FROM plans'
+      text: 'SELECT * FROM modules'
     };
     const { rows } = await client.query(query);
-    return rows as unknown as Plan[];
+    return rows as unknown as Modules[];
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -35,15 +35,15 @@ export async function getAllPlansRepository() {
   }
 }
 
-export async function getPlanByNameRepository(planName: string) {
+export async function getModulesByNameRepository(moduleName: string) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'SELECT * FROM plans WHERE name like ($1)',
-      values: [planName]
+      text: 'SELECT * FROM modules WHERE name like ($1)',
+      values: [moduleName]
     };
     const { rows } = await client.query(query);
-    return rows[0] as unknown as Plan;
+    return rows[0] as unknown as Modules;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -51,15 +51,15 @@ export async function getPlanByNameRepository(planName: string) {
   }
 }
 
-export async function getPlanByAssociationRepository(id: number) {
+export async function getModuleByAssociationRepository(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'SELECT * FROM companies_plans WHERE plan_id = $1',
+      text: 'SELECT * FROM companies_modules WHERE module_id = $1',
       values: [id]
     };
     const { rows } = await client.query(query);
-    return rows as unknown as AssociatePlan[];
+    return rows as unknown as AssociateModule[];
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -67,15 +67,15 @@ export async function getPlanByAssociationRepository(id: number) {
   }
 }
 
-export async function getPlanByIdRepository(id: number) {
+export async function getModuleByIdRepository(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'SELECT * FROM plans WHERE id = $1',
+      text: 'SELECT * FROM modules WHERE id = $1',
       values: [id]
     };
     const { rows } = await client.query(query);
-    return rows[0] as unknown as Plan;
+    return rows[0] as unknown as Modules;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -83,21 +83,15 @@ export async function getPlanByIdRepository(id: number) {
   }
 }
 
-export async function updatePlansRepository(plan: Plan) {
+export async function updateModuleRepository(module: Modules) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'UPDATE plans SET ' +
-        'name = $1, max_admins =$2, max_supervisors = $3, max_users = $4 ' +
-        'WHERE id = $5',
-      values: [
-        plan.name,
-        plan.max_admins,
-        plan.max_supervisors,
-        plan.max_users,
-        plan.id
-      ]
+        'UPDATE modules SET ' +
+        'name = $1, description = $2 ' +
+        'WHERE id = $3',
+      values: [module.name, module.description, module.id]
     };
     await client.query(query);
   } catch (error: any) {
@@ -107,15 +101,15 @@ export async function updatePlansRepository(plan: Plan) {
   }
 }
 
-export async function associatePlansRepository(plan: AssociatePlan) {
+export async function associateModuleRepository(module: AssociateModule) {
   const client = await pool.connect();
   try {
     const query = {
       text:
-        'INSERT INTO companies_plans (company_id, plan_id, end_date) ' +
+        'INSERT INTO companies_modules (company_id, module_id, end_date) ' +
         'VALUES ' +
         '($1, $2, $3) RETURNING *',
-      values: [plan.company_id, plan.plan_id, plan.end_date]
+      values: [module.company_id, module.module_id, module.end_date]
     };
     await client.query(query);
   } catch (error: any) {
@@ -125,11 +119,11 @@ export async function associatePlansRepository(plan: AssociatePlan) {
   }
 }
 
-export async function removeAllAssociationPlanByCompany(company_id: number) {
+export async function removeAllAssociationModuleByCompany(company_id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'DELETE FROM companies_plans WHERE company_id = $1 ',
+      text: 'DELETE FROM companies_modules WHERE company_id = $1 ',
       values: [company_id]
     };
     await client.query(query);
@@ -140,12 +134,12 @@ export async function removeAllAssociationPlanByCompany(company_id: number) {
   }
 }
 
-export async function desassociatePlansRepository(plan: AssociatePlan) {
+export async function desassociateModuleRepository(module: AssociateModule) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'DELETE FROM companies_plans WHERE company_id = $1 AND plan_id = $2 ',
-      values: [plan.company_id, plan.plan_id]
+      text: 'DELETE FROM companies_modules WHERE company_id = $1 AND module_id = $2 ',
+      values: [module.company_id, module.module_id]
     };
     await client.query(query);
   } catch (error: any) {
@@ -155,11 +149,11 @@ export async function desassociatePlansRepository(plan: AssociatePlan) {
   }
 }
 
-export async function deletePlansRepository(id: number) {
+export async function deleteModuleRepository(id: number) {
   const client = await pool.connect();
   try {
     const query = {
-      text: 'DELETE FROM plans WHERE id = $1',
+      text: 'DELETE FROM modules WHERE id = $1',
       values: [id]
     };
     await client.query(query);

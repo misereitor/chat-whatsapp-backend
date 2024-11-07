@@ -1,20 +1,22 @@
 import { NextFunction, Request, Response } from 'express';
 import { valideTokenUserAdminService } from './services/auth-service';
-import { ClienteRequest } from './model/request-model';
 
 export async function superadminMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const token: string | undefined = req.headers.authorization;
-  const body: ClienteRequest = req.body;
-  const response: any = await valideTokenUserAdminService(token);
-  if (response.role.id !== body.company_id)
-    throw new Error(
-      JSON.stringify({ success: false, message: 'não autorizado' })
-    );
-  next();
+  try {
+    const token: string | undefined = req.headers.authorization;
+    const response: any = await valideTokenUserAdminService(token);
+    if (response.user.role.name !== 'superadmin')
+      throw new Error(
+        JSON.stringify({ success: false, message: 'não autorizado' })
+      );
+    next();
+  } catch (error: any) {
+    res.status(403).json({ success: false, message: error.message });
+  }
 }
 
 export async function clientChatMiddleware(
@@ -25,19 +27,14 @@ export async function clientChatMiddleware(
   try {
     const roleClient = ['admin', 'supervisor', 'atendente'];
     const token: string | undefined = req.headers.authorization;
-    const body: ClienteRequest = req.body;
     const response: any = await valideTokenUserAdminService(token);
-    if (response.company.id != body.company_id)
-      throw new Error(
-        JSON.stringify({ success: false, message: 'não autorizado' })
-      );
-    if (!roleClient.includes(response.role.name))
+    if (!roleClient.includes(response.user.role.name))
       throw new Error(
         JSON.stringify({ success: false, message: 'não autorizado' })
       );
     next();
   } catch (error: any) {
-    res.status(500).send(error.message);
+    res.status(403).json({ success: false, message: error.message });
   }
 }
 
@@ -47,21 +44,16 @@ export async function clientSupervisorMiddleware(
   next: NextFunction
 ) {
   try {
-    const roleClient = ['admin', 'supervisor'];
+    const roleClient = ['admin', 'supervisor', 'superadmin'];
     const token: string | undefined = req.headers.authorization;
-    const body: ClienteRequest = req.body;
     const response: any = await valideTokenUserAdminService(token);
-    if (response.role.id === 1) return next();
-    if (response.company.id != body.company_id)
-      throw new Error(
-        JSON.stringify({ success: false, message: 'não autorizado' })
-      );
-    if (!roleClient.includes(response.role.name))
+    if (response.user.role.id === 1) return next();
+    if (!roleClient.includes(response.user.role.name))
       throw new Error(
         JSON.stringify({ success: false, message: 'não autorizado' })
       );
     return next();
   } catch (error: any) {
-    res.status(500).send(error.message);
+    res.status(403).json({ success: false, message: error.message });
   }
 }

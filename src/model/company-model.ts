@@ -1,4 +1,5 @@
 import { Channel } from './channel-model';
+import { modules } from './module-model';
 
 export interface Company {
   id: number;
@@ -44,14 +45,6 @@ export interface UserCompany {
 export interface Role {
   id: number;
   name: string;
-}
-
-export interface modules {
-  id: number;
-  name: string;
-  description: string;
-  start_date: Date;
-  end_date: Date;
 }
 
 export interface plan {

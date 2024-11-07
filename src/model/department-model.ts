@@ -22,3 +22,8 @@ export interface Updatedepartment {
   is_active: boolean;
   user_id: number;
 }
+
+export interface AssociateDepartment {
+  user_id: number;
+  department_id: number;
+}
