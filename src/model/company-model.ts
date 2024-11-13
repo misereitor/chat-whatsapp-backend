@@ -1,5 +1,5 @@
 import { Channel } from './channel-model';
-import { modules } from './module-model';
+import { Modules } from './module-model';
 
 export interface Company {
   id: number;
@@ -12,9 +12,9 @@ export interface Company {
   updated_at: string;
   channels: Channel[];
   users: UserCompany[];
-  modules: modules[];
+  modules: Modules[];
   plan: plan;
-  dealer_id: number;
+  dealer: number;
 }
 
 export interface CreateCompany {

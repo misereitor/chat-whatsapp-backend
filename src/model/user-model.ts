@@ -1,5 +1,5 @@
 import { Company } from './company-model';
-import { department } from './department-model';
+import { Department } from './department-model';
 
 export interface User {
   id: number;
@@ -15,7 +15,7 @@ export interface User {
   role: Role;
   grade: number[];
   company: Company;
-  departments: department[];
+  departments: Department[];
 }
 
 export interface InsertUser {
@@ -33,7 +33,7 @@ export interface InsertUser {
   updatedAt: Date;
   role: Role;
   company_id: number;
-  departments?: department[];
+  departments?: Department[];
 }
 
 export interface Role {

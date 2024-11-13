@@ -1,7 +1,7 @@
 import pool from '../config/pg_db.conf';
 import {
   Createdepartment,
-  department,
+  Department,
   Updatedepartment
 } from '../model/department-model';
 
@@ -22,7 +22,7 @@ export async function createdepartmentRepository(department: Createdepartment) {
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows as unknown as department;
+    return rows as unknown as Department;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -39,7 +39,7 @@ export async function getDepartmentById(id: number) {
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows[0] as unknown as department;
+    return rows[0] as unknown as Department;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -59,7 +59,7 @@ export async function getDepartmentByCompanyIdAndName(
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows[0] as unknown as department;
+    return rows[0] as unknown as Department;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -76,7 +76,7 @@ export async function getDepartmentByCompanyId(id: number) {
       rowMode: 'single'
     };
     const { rows } = await client.query(query);
-    return rows as unknown as department[];
+    return rows as unknown as Department[];
   } catch (error: any) {
     throw new Error(error.message);
   } finally {
@@ -150,7 +150,7 @@ export async function updatedepartmentRepository(department: Updatedepartment) {
       values: [department.name, department.department_id]
     };
     const { rows } = await client.query(query);
-    return rows[0] as unknown as department;
+    return rows[0] as unknown as Department;
   } catch (error: any) {
     throw new Error(error.message);
   } finally {

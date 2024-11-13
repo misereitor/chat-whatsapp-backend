@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { Channel } from './channel-model';
-import { department } from './department-model';
+import { Department } from './department-model';
 import { User } from './user-model';
 
 export interface CustomersMessage {
@@ -15,7 +15,7 @@ export interface CustomersMessage {
   lastMessage: number;
   inBot: boolean;
   active: boolean;
-  department?: department;
+  department?: Department;
   user?: User;
   dateCreateChat: number;
   segmentInfo?: any;
@@ -39,7 +39,7 @@ export interface Customer {
   lastMessage: number;
   inBot: boolean;
   active: boolean;
-  department?: department;
+  department?: Department;
   user?: User;
   dateCreateChat: number;
   segmentInfo?: any;
@@ -116,6 +116,7 @@ export interface ReplyTo {
 export interface Media {
   url?: string;
   filename?: string;
+  portrait?: boolean;
   mimetype?: string;
   s3?: S3 | null;
   error?: Error | null;

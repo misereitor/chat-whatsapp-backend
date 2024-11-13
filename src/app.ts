@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import bodyParser from 'body-parser';
 import cors, { CorsOptions } from 'cors';
 import { routerWebhook } from './router/webhook.router';
 import { Server } from 'socket.io';
@@ -12,11 +13,13 @@ import { config } from 'dotenv';
 import { routerCompany } from './router/company.route';
 import { routerPlans } from './router/plan.router';
 import { routerModules } from './router/module.route';
+import { routerTag } from './router/tag.router';
 
 config();
 
 const app: Application = express();
 
+app.use(bodyParser.json({ limit: '200mb' }));
 const corsOptions: CorsOptions = {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -44,5 +47,6 @@ app.use('/api', routerdepartment);
 app.use('/api', routerCompany);
 app.use('/api', routerPlans);
 app.use('/api', routerModules);
+app.use('/api', routerTag);
 
 export { app, server, io };

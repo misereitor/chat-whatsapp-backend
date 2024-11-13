@@ -11,7 +11,10 @@ import {
   getDepatmentByCompanyIdService,
   updateDepatmentService
 } from '../services/department-service';
-import { clientSupervisorMiddleware } from '../middleware';
+import {
+  clientChatMiddleware,
+  clientSupervisorMiddleware
+} from '../middleware';
 import { InsertUser } from '../model/user-model';
 import { securityRouter } from '../services/security/security-service';
 
@@ -27,7 +30,7 @@ routerdepartment.post(
       await securityRouter(token, Number(company_id));
 
       const request = req.body;
-      const response = await createdepartmentService(request.department);
+      const response = await createdepartmentService(request);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -37,7 +40,7 @@ routerdepartment.post(
 
 routerdepartment.get(
   '/:company_id/department/get-all',
-  clientSupervisorMiddleware,
+  clientChatMiddleware,
   async (req: Request, res: Response) => {
     try {
       const token = req.headers.authorization as string;
@@ -97,7 +100,6 @@ routerdepartment.put(
       const token = req.headers.authorization as string;
       const { company_id } = req.params;
       await securityRouter(token, Number(company_id));
-
       const department: Updatedepartment = req.body;
       const response = await updateDepatmentService(department);
       res.status(200).json({ success: true, data: response });

@@ -7,6 +7,7 @@ import {
   getAllPlansService,
   updatePlanService
 } from '../services/plan-service';
+import { securityRouter } from '../services/security/security-service';
 
 const routerPlans = Router();
 
@@ -39,13 +40,17 @@ routerPlans.get(
   }
 );
 
-routerPlans.put(
-  '/plan/associate',
+routerPlans.post(
+  '/:company_id/plan/associate',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const data = req.body;
-      const response = await AssociatePlanService(data.plan);
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
+      const { plan } = req.body;
+      const response = await AssociatePlanService(plan);
 
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {

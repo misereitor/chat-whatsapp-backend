@@ -11,14 +11,10 @@ export async function securityRouter(
     if (!company_id) throw new Error('não autorizado');
     const company = await getCompanyById(company_id);
     if (!company) throw new Error('não autorizado');
-
     if (response.user.role.name === 'revendedor') {
-      if (response.user.company.id !== company.dealer_id)
+      if (response.user.company.id !== company.dealer)
         throw new Error('não autorizado');
     }
-
-    if (response.user.company.id !== company_id)
-      throw new Error('não autorizado');
 
     return response.user;
   } catch (error: any) {

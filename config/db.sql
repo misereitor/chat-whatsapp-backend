@@ -129,29 +129,24 @@ CREATE TABLE users_roles_companies (
 
 CREATE TABLE IF NOT EXISTS tags (
     id SERIAL PRIMARY KEY,
-    type INTEGER NOT NULL,
-    name VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    user_id INTEGER,
+    company_id INTEGER NOT NULL,
+    all_department BOOLEAN,
     bg_color VARCHAR(20) NOT NULL,
     text_color VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS tags_departments (
-    id SERIAL PRIMARY KEY,
+
+CREATE TABLE IF NOT EXISTS tag_departments (
     tag_id INTEGER NOT NULL,
     department_id INTEGER NOT NULL,
+    PRIMARY KEY (tag_id, department_id),
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
-    UNIQUE (tag_id, department_id)
-);
-
-CREATE TABLE IF NOT EXISTS tags_user (
-    id SERIAL PRIMARY KEY,
-    tag_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    UNIQUE (tag_id, user_id),
-    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS user_department (

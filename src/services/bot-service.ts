@@ -51,7 +51,7 @@ export async function botInteraction(
         message.status = 1;
         await insertNewMessageByCustomer(message);
         io.emit(
-          `${message.connection}.${message.session}.update`,
+          `${message.connection}.${message.session}.newMessage`,
           JSON.stringify({ ...message })
         );
         return;
@@ -372,7 +372,7 @@ async function redirectCustomerToDepartmentAndEmit(
       const messagesCustomer = await getMessageByCustomer(customer);
       customer.messages = messagesCustomer;
       io.emit(
-        `${customer.channel.connection}.${customer.channel.session}.new`,
+        `${customer.channel.connection}.${customer.channel.session}.newChat`,
         JSON.stringify({ ...customer })
       );
     }, 2000);
@@ -412,7 +412,7 @@ async function redirectCustomerToAttendantAndEmit(
       const messagesCustomer = await getMessageByCustomer(customer);
       customer.messages = messagesCustomer;
       io.emit(
-        `${customer.channel.connection}.${customer.channel.session}.new`,
+        `${customer.channel.connection}.${customer.channel.session}.newChat`,
         JSON.stringify({ ...customer })
       );
     }, 2000);
@@ -473,7 +473,7 @@ async function handleServiceAction(customer: Customer, message: InsertMessage) {
     await updateCustomer(customer);
     await insertNewMessageByCustomer(message);
     io.emit(
-      `${message.connection}.${message.session}.update`,
+      `${message.connection}.${message.session}.newMessage`,
       JSON.stringify({ ...message })
     );
   } catch (error: any) {

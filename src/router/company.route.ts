@@ -1,5 +1,8 @@
 import { Response, Request, Router } from 'express';
-import { clientSupervisorMiddleware } from '../middleware';
+import {
+  clientSupervisorMiddleware,
+  revendedorMiddleware
+} from '../middleware';
 import {
   createCompanyServices,
   getAllCompanyForSelect,
@@ -38,7 +41,6 @@ routerCompany.get(
       const token = req.headers.authorization as string;
       const { company_id } = req.params;
       const user: any = await securityRouter(token, Number(company_id));
-
       const response = await getAllCompanyServices(user);
       res.status(200).json({ success: true, data: response });
     } catch (error: any) {
@@ -49,7 +51,7 @@ routerCompany.get(
 
 routerCompany.get(
   '/:company_id/company/get-company-by-id/:id',
-  clientSupervisorMiddleware,
+  revendedorMiddleware,
   async (req: Request, res: Response) => {
     try {
       const token = req.headers.authorization as string;
@@ -84,8 +86,8 @@ routerCompany.get(
 );
 
 routerCompany.get(
-  '/:company_id/company/get-company-for-select/',
-  clientSupervisorMiddleware,
+  '/:company_id/company/get-company-for-select',
+  revendedorMiddleware,
   async (req: Request, res: Response) => {
     try {
       const token = req.headers.authorization as string;

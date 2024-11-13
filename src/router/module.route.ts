@@ -7,6 +7,7 @@ import {
   getAllModulesService,
   updateModuleService
 } from '../services/module-service';
+import { securityRouter } from '../services/security/security-service';
 
 const routerModules = Router();
 
@@ -39,11 +40,15 @@ routerModules.get(
   }
 );
 
-routerModules.put(
-  '/module/associate',
+routerModules.post(
+  '/:company_id/module/associate',
   superadminMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const token = req.headers.authorization as string;
+      const { company_id } = req.params;
+      await securityRouter(token, Number(company_id));
+
       const { module } = req.body;
       const response = await AssociateModuleService(module);
 

@@ -9,6 +9,10 @@ import {
 import { WebhookMessage } from '../model/webhook-model';
 import { getChannelByConnectionAndSession } from '../repository/channel-repository';
 import { getCustomerByChannelAndChatId } from '../repository/chat-repository';
+import {
+  getImageDimensions,
+  getVideoDimensionsFromBlob
+} from '../util/media-dimensions';
 import { replaceMessageUpdateStatus } from '../util/replaceMessage';
 import { extractThumbnail } from '../util/videoThumbnail';
 import { uploadFileService } from './aws/s3-service';
@@ -21,23 +25,27 @@ const {
 
 export async function insertNewMessageByCustomer(message: InsertMessage) {
   try {
-    if (
-      message.hasMedia &&
-      message.media?.mimetype?.split('/')[0] === 'video' &&
-      message.media.url
-    ) {
-      const nameFile = message.media.url
-        .split('/')
-        .slice(-1)[0]
-        .split('?')[0]
-        .split('.')[0];
-      const blobMessage = await getThumbnailVideo(message.media.url);
-      if (!blobMessage) return;
-      const thumbnail = await extractThumbnail(blobMessage);
-      const blobThumbnail = new Blob([thumbnail], {
-        type: message.media.mimetype
-      });
-      await uploadFileService(`thumbnail/${nameFile}.png`, blobThumbnail);
+    if (message.hasMedia && message.media?.url) {
+      if (message.media?.mimetype?.split('/')[0] === 'video') {
+        const nameFile = message.media.url
+          .split('/')
+          .slice(-1)[0]
+          .split('?')[0]
+          .split('.')[0];
+        const blobMessage = await getBlobMedia(message.media.url);
+        if (!blobMessage) return;
+        message.media.portrait = await getVideoDimensionsFromBlob(blobMessage);
+        const thumbnail = await extractThumbnail(blobMessage);
+        const blobThumbnail = new Blob([thumbnail], {
+          type: message.media.mimetype
+        });
+        await uploadFileService(`thumbnail/${nameFile}.png`, blobThumbnail);
+      }
+      if (message.media?.mimetype === 'image/jpeg') {
+        const blobMessage = await getBlobMedia(message.media.url);
+        if (!blobMessage) return;
+        message.media.portrait = await getImageDimensions(blobMessage);
+      }
     }
     const mongoClient = await connectToMongo();
     const dbMessages = mongoClient.db(MONGO_DB).collection('messages');
@@ -119,7 +127,7 @@ export async function updateStatusMessageAdnEmit(message: WebhookMessage) {
       await updateStatusMessageByConectionAndSession(messageFiltred);
       if (!customerExist.active) return;
       io.emit(
-        `${message.me.id}.${message.session}.status`,
+        `${message.me.id}.${message.session}.statusMessage`,
         JSON.stringify({ ...messageFiltred })
       );
     } else {
@@ -147,7 +155,7 @@ async function updateStatusMessageByConectionAndSession(message: Message) {
   }
 }
 
-async function getThumbnailVideo(url: string) {
+async function getBlobMedia(url: string) {
   try {
     const response = await fetch(url, {
       headers: {

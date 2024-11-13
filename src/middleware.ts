@@ -19,6 +19,25 @@ export async function superadminMiddleware(
   }
 }
 
+export async function revendedorMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const roleClient = ['superadmin', 'revendedor'];
+    const token: string | undefined = req.headers.authorization;
+    const response: any = await valideTokenUserAdminService(token);
+    if (!roleClient.includes(response.user.role.name))
+      throw new Error(
+        JSON.stringify({ success: false, message: 'não autorizado' })
+      );
+    next();
+  } catch (error: any) {
+    res.status(403).json({ success: false, message: error.message });
+  }
+}
+
 export async function clientChatMiddleware(
   req: Request,
   res: Response,
@@ -44,7 +63,7 @@ export async function clientSupervisorMiddleware(
   next: NextFunction
 ) {
   try {
-    const roleClient = ['admin', 'supervisor', 'superadmin'];
+    const roleClient = ['admin', 'supervisor', 'superadmin', 'revendedor'];
     const token: string | undefined = req.headers.authorization;
     const response: any = await valideTokenUserAdminService(token);
     if (response.user.role.id === 1) return next();

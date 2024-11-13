@@ -21,10 +21,12 @@ export async function createModuleService(module: Modules) {
   }
 }
 
-export async function AssociateModuleService(module: AssociateModule) {
+export async function AssociateModuleService(module: AssociateModule[]) {
   try {
-    await removeAllAssociationModuleByCompany(module.company_id);
-    await associateModuleRepository(module);
+    await removeAllAssociationModuleByCompany(module[0].company_id);
+    for (const associate of module) {
+      await associateModuleRepository(associate);
+    }
   } catch (error: any) {
     throw new Error(error.message);
   }
