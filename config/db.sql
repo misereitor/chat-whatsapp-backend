@@ -220,8 +220,10 @@ CREATE TABLE IF NOT EXISTS fast_messages (
     message VARCHAR(255) NOT NULL,
     keyword VARCHAR(50) NOT NULL,
     user_create_id INTEGER NOT NULL,
+    company_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_create_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS departments_fast_messages (
@@ -230,15 +232,6 @@ CREATE TABLE IF NOT EXISTS departments_fast_messages (
     fast_message_id INTEGER NOT NULL,
     UNIQUE (department_id, fast_message_id),
     FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
-    FOREIGN KEY (fast_message_id) REFERENCES fast_messages(id)
-);
-
-CREATE TABLE IF NOT EXISTS user_fast_message (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    fast_message_id INTEGER NOT NULL,
-    UNIQUE (user_id, fast_message_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (fast_message_id) REFERENCES fast_messages(id)
 );
 

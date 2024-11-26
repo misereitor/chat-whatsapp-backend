@@ -84,6 +84,22 @@ export async function getDepartmentByCompanyId(id: number) {
   }
 }
 
+export async function getDepartmentByCompanyIds(ids: number[]) {
+  const client = await pool.connect();
+  try {
+    const query = {
+      text: 'SELECT * FROM departments WHERE company_id IN $1',
+      values: [ids]
+    };
+    const { rows } = await client.query(query);
+    return rows as unknown as Department[];
+  } catch (error: any) {
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
 export async function associatedepartmentForUserRepository(
   user_id: number,
   department_id: number

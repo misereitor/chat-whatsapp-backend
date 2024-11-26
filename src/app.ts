@@ -14,6 +14,7 @@ import { routerCompany } from './router/company.route';
 import { routerPlans } from './router/plan.router';
 import { routerModules } from './router/module.route';
 import { routerTag } from './router/tag.router';
+import { routerFastMessage } from './router/fast-message.router';
 
 config();
 
@@ -48,5 +49,6 @@ app.use('/api', routerCompany);
 app.use('/api', routerPlans);
 app.use('/api', routerModules);
 app.use('/api', routerTag);
+app.use('/api', routerFastMessage);
 
 export { app, server, io };

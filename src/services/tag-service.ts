@@ -65,26 +65,30 @@ async function associationTagService(
   currentDepartments: Department[],
   idTag: number
 ) {
-  if (updatedDepartments.length === 0) {
-    await desassociateAllTagFromDepartmentRepository(idTag);
-    return;
-  }
-  const updatedIds = new Set(updatedDepartments.map((d) => d.id));
-  const currentIds = new Set(currentDepartments.map((d) => d.id));
-
-  const toDisassociate = currentDepartments.filter(
-    (d) => !updatedIds.has(d.id)
-  );
-  if (toDisassociate.length > 0) {
-    for (const department of toDisassociate) {
-      await desassociateTagFromDepartmentRepository(idTag, department.id);
+  try {
+    if (updatedDepartments.length === 0) {
+      await desassociateAllTagFromDepartmentRepository(idTag);
+      return;
     }
-  }
+    const updatedIds = new Set(updatedDepartments.map((d) => d.id));
+    const currentIds = new Set(currentDepartments.map((d) => d.id));
 
-  const toAssociate = updatedDepartments.filter((d) => !currentIds.has(d.id));
-  if (toAssociate.length > 0) {
-    for (const department of toAssociate) {
-      await associateTagToDepartmentRepository(idTag, department.id);
+    const toDisassociate = currentDepartments.filter(
+      (d) => !updatedIds.has(d.id)
+    );
+    if (toDisassociate.length > 0) {
+      for (const department of toDisassociate) {
+        await desassociateTagFromDepartmentRepository(idTag, department.id);
+      }
     }
+
+    const toAssociate = updatedDepartments.filter((d) => !currentIds.has(d.id));
+    if (toAssociate.length > 0) {
+      for (const department of toAssociate) {
+        await associateTagToDepartmentRepository(idTag, department.id);
+      }
+    }
+  } catch (error: any) {
+    throw new Error(error.message);
   }
 }
