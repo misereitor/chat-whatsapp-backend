@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS companies (
 CREATE TABLE IF NOT EXISTS plans (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description VARCHAR,
+    description VARCHAR(255),
     max_admins INTEGER NOT NULL DEFAULT 1,
     max_supervisors INTEGER NOT NULL,
     max_users INTEGER NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS plans (
 CREATE TABLE IF NOT EXISTS modules (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description VARCHAR,
+    description VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS channels (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     connection VARCHAR(250) NOT NULL,
-    session VARCHAR (100) NOT NULL,
+    session VARCHAR(100) NOT NULL,
     channel_type VARCHAR(30) NOT NULL,
     company_id INTEGER NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -140,7 +140,6 @@ CREATE TABLE IF NOT EXISTS tags (
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
 
-
 CREATE TABLE IF NOT EXISTS tag_departments (
     tag_id INTEGER NOT NULL,
     department_id INTEGER NOT NULL,
@@ -168,18 +167,18 @@ CREATE TABLE IF NOT EXISTS bots (
     id SERIAL PRIMARY KEY,
     type INTEGER NOT NULL,
     name VARCHAR(100) NOT NULL,
-    description VARCHAR,
-    greeting_message VARCHAR,
+    description VARCHAR(255),
+    greeting_message VARCHAR(255),
     has_menu BOOLEAN DEFAULT FALSE,
     has_segmentation BOOLEAN DEFAULT FALSE,
     has_evaluation BOOLEAN DEFAULT FALSE,
-    option_message VARCHAR,
-    targeting_message VARCHAR,
-    absent_message VARCHAR,
-    message_evaluation VARCHAR,
-    evaluation_thanks_message VARCHAR,
-    error_evaluation_message VARCHAR,
-    final_greeting_message VARCHAR,
+    option_message VARCHAR(255),
+    targeting_message VARCHAR(255),
+    absent_message VARCHAR(255),
+    message_evaluation VARCHAR(255),
+    evaluation_thanks_message VARCHAR(255),
+    error_evaluation_message VARCHAR(255),
+    final_greeting_message VARCHAR(255),
     time_limit_avaliation INTEGER NOT NULL,
     time_limit_notes INTEGER NOT NULL,
     time_limit_potential INTEGER NOT NULL,
@@ -197,11 +196,11 @@ CREATE TABLE IF NOT EXISTS bot_questions (
     bot_id INTEGER NOT NULL,
     sequence_segmentation INTEGER,
     options JSONB,
-    key_segmentation: VARCHAR(50),
+    key_segmentation VARCHAR(50),
     type_response VARCHAR(50) NOT NULL,
     type_question VARCHAR(50) NOT NULL,
-    url VARCHAR,
-    text VARCHAR, 
+    url VARCHAR(255),
+    text VARCHAR(255), 
     principal BOOLEAN,
     FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE
 );
@@ -222,7 +221,7 @@ CREATE TABLE IF NOT EXISTS fast_messages (
     user_create_id INTEGER NOT NULL,
     company_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_create_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_create_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
 );
 
@@ -247,7 +246,7 @@ CREATE TABLE IF NOT EXISTS departments_users (
 CREATE TABLE IF NOT EXISTS customers (
     id SERIAL PRIMARY KEY,
     chat_id VARCHAR(50) NOT NULL,
-    photo_url VARCHAR,
+    photo_url VARCHAR(255),
     total_attendances INTEGER,
     total_messages INTEGER,
     phone_number VARCHAR(20) NOT NULL,
@@ -270,17 +269,20 @@ CREATE TABLE IF NOT EXISTS customers (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- Inserts iniciais
+INSERT INTO roles (id, name) VALUES (1, 'master');
+
 INSERT INTO companies
-	(company_name, trade_name, type, cnpj, is_active)
+(company_name, trade_name, type, cnpj, is_active)
 VALUES
-	('Misael Miranda', 'Misael Baista Miranda', 'master', '12345678000134', true);
+('Misael Miranda', 'Misael Baista Miranda', 'master', '12345678000134', true);
 
 INSERT INTO users 
-	(name, email, phone_number, photo_url, login, password, is_active)
+(name, email, phone_number, photo_url, login, password, is_active)
 VALUES
-	('Misael Miranda', 'misaelbahia1@hotmail.com', '75983094954', 'https://www.iconsdb.com/icons/preview/deep-pink/whatsapp-xxl.png', 'misael.miranda', '$2b$10$3lRKnN.y7Ab8cIAyVSLXteyDxzgJfu5ed.j6XBeJhsXea4zOuaNYq', true);
+('Misael Miranda', 'misaelbahia1@hotmail.com', '75983094954', 'https://www.iconsdb.com/icons/preview/deep-pink/whatsapp-xxl.png', 'misael.miranda', '$2b$10$3lRKnN.y7Ab8cIAyVSLXteyDxzgJfu5ed.j6XBeJhsXea4zOuaNYq', true);
 
 INSERT INTO users_roles_companies
-	(user_id, company_id, role_id)
+(user_id, company_id, role_id)
 VALUES
-	(1, 1, 1);
+(1, 1, 1);

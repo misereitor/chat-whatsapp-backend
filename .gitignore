@@ -4,3 +4,5 @@
 /dist
 coverage
 jest.config.js
+/postgres-data
+/mongo-data
