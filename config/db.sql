@@ -270,7 +270,7 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 -- Inserts iniciais
-INSERT INTO roles (id, name) VALUES (1, 'master');
+INSERT INTO roles (id, name) VALUES (1, 'superadmin'), (2, 'admin'), (3, 'supervisor'), (4, 'atendente');
 
 INSERT INTO companies
 (company_name, trade_name, type, cnpj, is_active)
